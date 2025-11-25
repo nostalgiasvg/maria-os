@@ -4,6 +4,14 @@
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>MARÍA OS</title>
+    <!--
+ _   _           _        _       _         ______     ______ 
+| \ | | ___  ___| |_ __ _| | __ _(_) __ _  / ___\ \   / / ___|
+|  \| |/ _ \/ __| __/ _` | |/ _` | |/ _` | \___ \\ \ / / |  _ 
+| |\  | (_) \__ \ || (_| | | (_| | | (_| |_ ___) |\ V /| |_| |
+|_| \_|\___/|___/\__\__,_|_|\__, |_|\__,_(_)____/  \_/  \____|
+                            |___/                             
+    -->
     <style>
         * {
             margin: 0;
@@ -868,12 +876,12 @@
     <script>
         // Initial artifacts data
         const artifacts = [
-            { name: 'human.exe', url: 'https://nostalgiasvg.github.io/human.exe/', x: 20, y: 160 },
-            { name: 'pixel-artsy', url: 'https://nostalgiasvg.github.io/pixel-artsy/', x: 20, y: 20 },
-            { name: 'trace-me [mobile]', url: 'https://nostalgiasvg.github.io/trace-me/', x: 260, y: 20 },
-            { name: 'impressionism-me', url: 'https://nostalgiasvg.github.io/impressionism-me/', x: 140, y: 160 },
-            { name: 'fortune-machine [WIP]', url: '#', x: 260, y: 160 },
-            { name: 'random-thoughts', type: 'folder', x: 380, y: 160 }
+            { name: 'human.exe', url: 'https://nostalgiasvg.github.io/human.exe/', x: 20, y: 20 },
+            { name: 'impressionism-me', url: 'https://nostalgiasvg.github.io/impressionism-me/', x: 140, y: 20 },
+            { name: 'pixel-artsy', url: 'https://nostalgiasvg.github.io/pixel-artsy/', x: 260, y: 20 },
+            { name: 'trace-me [mobile]', url: 'https://nostalgiasvg.github.io/trace-me/', x: 380, y: 20 },
+            { name: 'fortune-machine', url: '#', x: 20, y: 160 },
+            { name: 'random-thoughts', type: 'folder', x: 140, y: 160 }
         ];
 
         let windows = [];
@@ -1169,7 +1177,8 @@ Tenlo en cuenta para crear tus pequeñas notas pero no permitas que nada se pier
                         console.error('Error loading icon image for', artifact.name);
                         // Fallback to text icon
                         const canvas = document.createElement('canvas');
-                        const initials = artifact.name.split('-').map(w => w[0]).join('').toUpperCase().slice(0, 3);
+                        const isWIP = (!artifact.url || artifact.url === '#') && artifact.type !== 'folder';
+                        const initials = isWIP ? 'WIP' : artifact.name.split('-').map(w => w[0]).join('').toUpperCase().slice(0, 3);
                         createDitheredIcon(initials, canvas);
                         iconImage.innerHTML = '';
                         iconImage.appendChild(canvas);
@@ -1186,7 +1195,8 @@ Tenlo en cuenta para crear tus pequeñas notas pero no permitas que nada se pier
                         console.error('Error loading icon image for', artifact.name);
                         // Fallback to text icon
                         const canvas = document.createElement('canvas');
-                        const initials = artifact.name.split('-').map(w => w[0]).join('').toUpperCase().slice(0, 3);
+                        const isWIP = (!artifact.url || artifact.url === '#') && artifact.type !== 'folder';
+                        const initials = isWIP ? 'WIP' : artifact.name.split('-').map(w => w[0]).join('').toUpperCase().slice(0, 3);
                         createDitheredIcon(initials, canvas);
                         iconImage.innerHTML = '';
                         iconImage.appendChild(canvas);
@@ -1194,11 +1204,19 @@ Tenlo en cuenta para crear tus pequeñas notas pero no permitas que nada se pier
                     iconImage.appendChild(img);
                 }
             } else {
+                // Check if this is a WIP artifact (url is '#' or empty, but NOT a folder)
+                const isWIP = (!artifact.url || artifact.url === '#') && artifact.type !== 'folder';
+                
                 // Use dithered text for all icons including folders without custom images
                 const canvas = document.createElement('canvas');
-                const initials = artifact.name.split('-').map(w => w[0]).join('').toUpperCase().slice(0, 3);
+                const initials = isWIP ? 'WIP' : artifact.name.split('-').map(w => w[0]).join('').toUpperCase().slice(0, 3);
                 createDitheredIcon(initials, canvas);
                 iconImage.appendChild(canvas);
+                
+                // Add tooltip for WIP items
+                if (isWIP) {
+                    icon.title = 'Próximamente';
+                }
             }
 
             const iconLabel = document.createElement('div');
@@ -1210,6 +1228,12 @@ Tenlo en cuenta para crear tus pequeñas notas pero no permitas que nada se pier
 
             // Double click to open
             icon.addEventListener('dblclick', () => {
+                // Don't open WIP artifacts (but folders are always openable)
+                const isWIP = (!artifact.url || artifact.url === '#') && artifact.type !== 'folder';
+                if (isWIP) {
+                    return;
+                }
+                
                 if (artifact.type === 'folder') {
                     openFolder(artifact, index);
                 } else {
