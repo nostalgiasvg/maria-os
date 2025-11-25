@@ -1,0 +1,2082 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>MARÍA OS</title>
+    <style>
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+        }
+
+        :root {
+            --bg-primary: #1a1a1a;
+            --bg-secondary: rgba(26, 26, 26, 0.95);
+            --text-primary: #fff;
+            --text-secondary: #1a1a1a;
+            --accent-primary: #fff;
+            --accent-secondary: #1a1a1a;
+            --border-color: #1a1a1a;
+        }
+
+        body {
+            font-family: 'Courier Prime', 'Courier New', monospace;
+            background: var(--bg-primary);
+            color: var(--text-primary);
+            overflow: hidden;
+            height: 100vh;
+            width: 100vw;
+        }
+
+        /* VOID Theme */
+        body.void {
+            --bg-primary: #0E0E0E;
+            --bg-secondary: rgba(14, 14, 14, 0.95);
+            --text-primary: #E7E7E5;
+            --text-secondary: #0E0E0E;
+            --accent-primary: #E7E7E5;
+            --accent-secondary: #0E0E0E;
+            --border-color: #E7E7E5;
+        }
+
+        /* TWILIGHT Theme */
+        body.twilight {
+            --bg-primary: #363435;
+            --bg-secondary: rgba(54, 52, 53, 0.95);
+            --text-primary: #C6728A;
+            --text-secondary: #363435;
+            --accent-primary: #C6728A;
+            --accent-secondary: #363435;
+            --border-color: #C6728A;
+        }
+
+        /* ETHEREAL Theme */
+        body.ethereal {
+            --bg-primary: #000000;
+            --bg-secondary: rgba(0, 0, 0, 0.95);
+            --text-primary: #C1DDAD;
+            --text-secondary: #000000;
+            --accent-primary: #C1DDAD;
+            --accent-secondary: #000000;
+            --border-color: #C1DDAD;
+        }
+
+        /* Menu Bar */
+        .menu-bar {
+            background: var(--accent-primary);
+            color: var(--text-secondary);
+            height: 30px;
+            display: flex;
+            align-items: center;
+            padding: 0 15px;
+            font-size: 12px;
+            letter-spacing: 1px;
+            text-transform: uppercase;
+            border-bottom: 2px solid var(--border-color);
+            position: relative;
+            z-index: 10000;
+        }
+
+        .menu-bar .logo {
+            font-weight: bold;
+            margin-right: 20px;
+        }
+
+        .menu-bar .time {
+            margin-left: auto;
+        }
+
+        .menu-bar .cat {
+            margin-left: auto;
+            margin-right: 15px;
+            font-size: 13px;
+            user-select: none;
+        }
+
+        .taskbar {
+            display: flex;
+            gap: 8px;
+            margin-left: 20px;
+            flex: 1;
+        }
+
+        .taskbar-item {
+            padding: 4px 12px;
+            background: var(--accent-primary);
+            color: var(--text-secondary);
+            border: 2px solid var(--border-color);
+            font-size: 10px;
+            letter-spacing: 0.5px;
+            text-transform: uppercase;
+            cursor: pointer;
+            transition: all 0.2s;
+            max-width: 150px;
+            overflow: hidden;
+            text-overflow: ellipsis;
+            white-space: nowrap;
+        }
+
+        .taskbar-item:hover {
+            background: var(--text-secondary);
+            color: var(--accent-primary);
+        }
+
+        /* Desktop */
+        .desktop {
+            position: relative;
+            height: calc(100vh - 30px);
+            width: 100vw;
+            background: var(--bg-primary);
+            background-image: 
+                repeating-linear-gradient(
+                    0deg,
+                    transparent,
+                    transparent 2px,
+                    rgba(255,255,255,.02) 2px,
+                    rgba(255,255,255,.02) 4px
+                );
+        }
+
+        /* Desktop Icons */
+        .icon {
+            position: absolute;
+            width: 100px;
+            height: 120px;
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            cursor: pointer;
+            user-select: none;
+            transition: transform 0.1s;
+        }
+
+        .icon:hover {
+            transform: scale(1.05);
+        }
+
+        .icon:active {
+            transform: scale(0.98);
+        }
+
+        .icon-image {
+            width: 80px;
+            height: 80px;
+            background: var(--accent-primary);
+            border: 2px solid var(--accent-primary);
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            font-size: 32px;
+            font-weight: bold;
+            color: var(--text-secondary);
+            margin-bottom: 8px;
+            position: relative;
+            overflow: hidden;
+        }
+
+        .icon-image canvas {
+            position: absolute;
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 100%;
+        }
+
+        .icon-label {
+            font-size: 11px;
+            text-align: center;
+            background: var(--bg-secondary);
+            padding: 4px 8px;
+            border-radius: 3px;
+            letter-spacing: 0.5px;
+            text-transform: uppercase;
+            max-width: 100px;
+            word-wrap: break-word;
+        }
+
+        /* Window */
+        .window {
+            position: absolute;
+            background: var(--accent-primary);
+            border: 3px solid var(--border-color);
+            box-shadow: 8px 8px 0 rgba(0,0,0,0.3);
+            min-width: 400px;
+            min-height: 300px;
+            display: none;
+            flex-direction: column;
+        }
+
+        .window.active {
+            display: flex;
+        }
+
+        .window-title-bar {
+            background: var(--bg-primary);
+            color: var(--text-primary);
+            padding: 8px 12px;
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            cursor: move;
+            user-select: none;
+            border-bottom: 2px solid var(--accent-primary);
+        }
+
+        .window-title {
+            font-size: 12px;
+            letter-spacing: 1px;
+            text-transform: uppercase;
+            font-weight: bold;
+        }
+
+        .window-controls {
+            display: flex;
+            gap: 8px;
+        }
+
+        .window-button {
+            width: 16px;
+            height: 16px;
+            background: var(--accent-primary);
+            border: 2px solid var(--accent-primary);
+            cursor: pointer;
+            font-size: 10px;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            color: var(--text-secondary);
+            font-weight: bold;
+            transition: transform 0.1s;
+        }
+
+        .window-button:hover {
+            transform: scale(1.1);
+        }
+
+        .window-button:active {
+            transform: scale(0.9);
+        }
+
+        .window-button.minimize::before {
+            content: '−';
+        }
+
+        .window-button.maximize::before {
+            content: '□';
+        }
+
+        .window-button.close::before {
+            content: '×';
+        }
+
+        .window.maximized {
+            left: 0 !important;
+            top: 30px !important;
+            width: 100vw !important;
+            height: calc(100vh - 30px) !important;
+        }
+
+        .window.minimized {
+            display: none !important;
+        }
+
+        .window-content {
+            flex: 1;
+            background: var(--accent-primary);
+            position: relative;
+            overflow: hidden;
+        }
+
+        .window-content iframe {
+            width: 100%;
+            height: 100%;
+            border: none;
+        }
+
+        /* Note Editor */
+        .note-editor {
+            width: 100%;
+            height: 100%;
+            display: flex;
+            flex-direction: column;
+            background: var(--accent-primary);
+        }
+
+        .note-editor-toolbar {
+            padding: 10px 15px;
+            border-bottom: 2px solid var(--border-color);
+            display: flex;
+            gap: 10px;
+            align-items: center;
+        }
+
+        .note-editor-input {
+            flex: 1;
+            padding: 8px;
+            border: 2px solid var(--border-color);
+            background: var(--accent-primary);
+            color: var(--text-secondary);
+            font-family: 'Courier Prime', monospace;
+            font-size: 11px;
+            text-transform: uppercase;
+            letter-spacing: 1px;
+        }
+
+        .note-editor-textarea {
+            flex: 1;
+            padding: 20px;
+            border: none;
+            background: var(--accent-primary);
+            color: var(--text-secondary);
+            font-family: 'Courier Prime', monospace;
+            font-size: 14px;
+            line-height: 1.6;
+            resize: none;
+            outline: none;
+        }
+
+        .note-editor-button {
+            padding: 8px 16px;
+            border: 2px solid var(--border-color);
+            background: var(--accent-primary);
+            color: var(--text-secondary);
+            font-family: 'Courier Prime', monospace;
+            font-size: 11px;
+            letter-spacing: 1px;
+            text-transform: uppercase;
+            cursor: pointer;
+            transition: all 0.2s;
+        }
+
+        .note-editor-button:hover {
+            background: var(--text-secondary);
+            color: var(--accent-primary);
+        }
+
+        /* Folder view */
+        .folder-view {
+            width: 100%;
+            height: 100%;
+            display: flex;
+            flex-direction: column;
+            background: var(--accent-primary);
+            padding: 20px;
+            overflow-y: auto;
+        }
+
+        .folder-header {
+            font-size: 16px;
+            letter-spacing: 2px;
+            text-transform: uppercase;
+            margin-bottom: 20px;
+            color: var(--text-secondary);
+            font-weight: bold;
+        }
+
+        .folder-items {
+            display: flex;
+            flex-direction: column;
+            gap: 10px;
+        }
+
+        .folder-item {
+            padding: 12px 15px;
+            border: 2px solid var(--border-color);
+            background: var(--accent-primary);
+            color: var(--text-secondary);
+            font-family: 'Courier Prime', monospace;
+            font-size: 12px;
+            letter-spacing: 1px;
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            cursor: pointer;
+            transition: all 0.2s;
+        }
+
+        .folder-item:hover {
+            background: var(--text-secondary);
+            color: var(--accent-primary);
+        }
+
+        .folder-item-actions {
+            display: flex;
+            gap: 10px;
+        }
+
+        .folder-item-delete {
+            padding: 4px 8px;
+            border: 1px solid var(--border-color);
+            background: transparent;
+            color: var(--text-secondary);
+            font-size: 10px;
+            cursor: pointer;
+            transition: all 0.2s;
+        }
+
+        .folder-item:hover .folder-item-delete {
+            color: var(--accent-primary);
+            border-color: var(--accent-primary);
+        }
+
+        .folder-item-delete:hover {
+            background: #ff0000;
+            border-color: #ff0000;
+            color: #fff;
+        }
+
+        .folder-empty {
+            padding: 40px;
+            text-align: center;
+            color: var(--text-secondary);
+            opacity: 0.5;
+            font-style: italic;
+        }
+
+        /* Edit Icon Modal */
+        .modal {
+            display: none;
+            position: fixed;
+            top: 0;
+            left: 0;
+            width: 100vw;
+            height: 100vh;
+            background: var(--bg-secondary);
+            z-index: 20000;
+            align-items: center;
+            justify-content: center;
+        }
+
+        .modal.active {
+            display: flex;
+        }
+
+        .modal-content {
+            background: #fff;
+            border: 3px solid #1a1a1a;
+            padding: 30px;
+            max-width: 500px;
+            width: 90%;
+        }
+
+        .modal-content h2 {
+            color: #1a1a1a;
+            font-size: 16px;
+            letter-spacing: 1px;
+            text-transform: uppercase;
+            margin-bottom: 20px;
+        }
+
+        .modal-content label {
+            display: block;
+            color: #1a1a1a;
+            font-size: 11px;
+            letter-spacing: 1px;
+            text-transform: uppercase;
+            margin-bottom: 8px;
+            margin-top: 15px;
+        }
+
+        .modal-content input[type="text"],
+        .modal-content input[type="url"] {
+            width: 100%;
+            padding: 12px;
+            border: 2px solid #1a1a1a;
+            background: #fff;
+            color: #1a1a1a;
+            font-family: 'Courier Prime', monospace;
+            font-size: 12px;
+            margin-bottom: 10px;
+        }
+
+        .modal-content input[type="file"] {
+            display: none;
+        }
+
+        .file-button {
+            width: 100%;
+            padding: 12px;
+            border: 2px solid #1a1a1a;
+            background: #fff;
+            color: #1a1a1a;
+            font-family: 'Courier Prime', monospace;
+            font-size: 11px;
+            letter-spacing: 1px;
+            text-transform: uppercase;
+            cursor: pointer;
+            margin-bottom: 10px;
+            transition: all 0.2s;
+            text-align: center;
+        }
+
+        .file-button:hover {
+            background: #1a1a1a;
+            color: #fff;
+        }
+
+        .paste-button {
+            width: 100%;
+            padding: 12px;
+            border: 2px solid #1a1a1a;
+            background: #fff;
+            color: #1a1a1a;
+            font-family: 'Courier Prime', monospace;
+            font-size: 11px;
+            letter-spacing: 1px;
+            text-transform: uppercase;
+            cursor: pointer;
+            margin-bottom: 10px;
+            transition: all 0.2s;
+        }
+
+        .paste-button:hover {
+            background: #1a1a1a;
+            color: #fff;
+        }
+
+        .checkbox-container {
+            display: flex;
+            align-items: center;
+            gap: 10px;
+            margin: 15px 0;
+        }
+
+        .checkbox-container input[type="checkbox"] {
+            width: 20px;
+            height: 20px;
+            cursor: pointer;
+        }
+
+        .checkbox-container label {
+            margin: 0;
+            cursor: pointer;
+        }
+
+        .palette-grid {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(120px, 1fr));
+            gap: 15px;
+            margin: 15px 0;
+        }
+
+        .palette-option {
+            cursor: pointer;
+            border: 3px solid #1a1a1a;
+            padding: 10px;
+            transition: all 0.2s;
+            background: #fff;
+        }
+
+        .palette-option:hover {
+            transform: scale(1.05);
+            box-shadow: 0 4px 8px rgba(0,0,0,0.2);
+        }
+
+        .palette-option.active {
+            border-color: #1a1a1a;
+            box-shadow: 0 0 0 3px #fff, 0 0 0 6px #1a1a1a;
+        }
+
+        .palette-preview {
+            height: 40px;
+            display: flex;
+            margin-bottom: 8px;
+        }
+
+        .palette-name {
+            font-size: 10px;
+            letter-spacing: 0.5px;
+            text-align: center;
+            color: #1a1a1a;
+            font-weight: bold;
+        }
+
+        .kaomoji-grid {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(80px, 1fr));
+            gap: 10px;
+            margin: 20px 0;
+        }
+
+        .kaomoji-option {
+            padding: 20px 10px;
+            border: 2px solid #1a1a1a;
+            background: #fff;
+            color: #1a1a1a;
+            font-size: 18px;
+            text-align: center;
+            cursor: pointer;
+            transition: all 0.2s;
+            user-select: none;
+        }
+
+        .kaomoji-option:hover {
+            transform: scale(1.1);
+            box-shadow: 0 4px 8px rgba(0,0,0,0.2);
+            background: #1a1a1a;
+            color: #fff;
+        }
+
+        .kaomoji-option.active {
+            background: #1a1a1a;
+            color: #fff;
+            border-width: 3px;
+        }
+
+        .modal-buttons {
+            display: flex;
+            gap: 12px;
+            margin-top: 25px;
+        }
+
+        .modal-button {
+            flex: 1;
+            padding: 12px 24px;
+            border: 2px solid #1a1a1a;
+            background: #fff;
+            color: #1a1a1a;
+            font-family: 'Courier Prime', monospace;
+            font-size: 12px;
+            letter-spacing: 1px;
+            text-transform: uppercase;
+            cursor: pointer;
+            transition: all 0.2s;
+        }
+
+        .modal-button:hover {
+            background: #1a1a1a;
+            color: #fff;
+        }
+
+        .modal-button.primary {
+            background: #1a1a1a;
+            color: #fff;
+        }
+
+        .modal-button.primary:hover {
+            background: #fff;
+            color: #1a1a1a;
+        }
+
+        /* Preview */
+        .icon-preview {
+            width: 80px;
+            height: 80px;
+            border: 2px solid #1a1a1a;
+            margin: 15px 0;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            background: #f0f0f0;
+        }
+
+        .icon-preview img {
+            max-width: 100%;
+            max-height: 100%;
+            object-fit: cover;
+        }
+
+        /* Responsive */
+        @media (max-width: 600px) {
+            .window {
+                min-width: 90vw;
+                min-height: 70vh;
+            }
+
+            .icon {
+                width: 80px;
+                height: 100px;
+            }
+
+            .icon-image {
+                width: 60px;
+                height: 60px;
+                font-size: 24px;
+            }
+
+            .modal-content {
+                padding: 20px;
+            }
+        }
+
+        /* Context Menu */
+        .context-menu {
+            position: absolute;
+            background: #fff;
+            border: 2px solid #1a1a1a;
+            display: none;
+            z-index: 15000;
+            min-width: 150px;
+        }
+
+        .context-menu.active {
+            display: block;
+        }
+
+        .context-menu-item {
+            padding: 10px 15px;
+            color: #1a1a1a;
+            cursor: pointer;
+            font-size: 11px;
+            letter-spacing: 1px;
+            text-transform: uppercase;
+            border-bottom: 1px solid #1a1a1a;
+        }
+
+        .context-menu-item:last-child {
+            border-bottom: none;
+        }
+
+        .context-menu-item:hover {
+            background: #1a1a1a;
+            color: #fff;
+        }
+    </style>
+</head>
+<body>
+    <!-- Menu Bar -->
+    <div class="menu-bar">
+        <div class="logo">✧ MARÍA OS</div>
+        <div class="taskbar" id="taskbar"></div>
+        <div class="cat" id="cat">ฅ^•ﻌ•^ฅ</div>
+        <div class="time" id="clock">00:00</div>
+    </div>
+
+    <!-- Desktop -->
+    <div class="desktop" id="desktop"></div>
+
+    <!-- Edit Icon Modal -->
+    <div class="modal" id="editModal">
+        <div class="modal-content">
+            <h2>EDIT ICON</h2>
+            <label>Name:</label>
+            <input type="text" id="editName" placeholder="artifact name">
+            
+            <label for="editUrl">URL:</label>
+            <input type="url" id="editUrl" placeholder="https://...">
+            
+            <label>Custom Image:</label>
+            <input type="file" id="editImage" accept="image/*">
+            <button class="file-button" id="editImageBtn">Choose Image</button>
+            <button class="paste-button" id="pasteImageBtn">Paste from Clipboard</button>
+            
+            <div class="checkbox-container">
+                <input type="checkbox" id="ditherIconToggle">
+                <label for="ditherIconToggle">Apply dither effect</label>
+            </div>
+            
+            <div class="icon-preview" id="iconPreview"></div>
+            
+            <div class="modal-buttons">
+                <button class="modal-button" id="cancelEdit">Cancel</button>
+                <button class="modal-button primary" id="saveEdit">Save</button>
+            </div>
+        </div>
+    </div>
+
+    <!-- Context Menu -->
+    <div class="context-menu" id="contextMenu">
+        <div class="context-menu-item" id="contextOpen">Open</div>
+        <div class="context-menu-item" id="contextOpenNewTab">Open in New Tab</div>
+        <div class="context-menu-item" id="contextEdit">Edit Icon</div>
+    </div>
+
+    <!-- Desktop Context Menu -->
+    <div class="context-menu" id="desktopContextMenu">
+        <div class="context-menu-item" id="openSettings">Settings</div>
+    </div>
+
+    <!-- Menu Bar Context Menu -->
+    <div class="context-menu" id="menuBarContextMenu">
+        <div class="context-menu-item" id="changeKaomoji">Change Kaomoji</div>
+    </div>
+
+    <!-- Kaomoji Modal -->
+    <div class="modal" id="kaomojiModal">
+        <div class="modal-content" style="max-width: 500px;">
+            <h2>CHOOSE KAOMOJI</h2>
+            
+            <div class="kaomoji-grid" id="kaomojiGrid"></div>
+            
+            <div class="modal-buttons">
+                <button class="modal-button primary" id="kaomojiClose">Close</button>
+            </div>
+        </div>
+    </div>
+
+    <!-- Settings Modal -->
+    <div class="modal" id="settingsModal">
+        <div class="modal-content" style="max-width: 600px;">
+            <h2>SETTINGS</h2>
+            
+            <label>Color Palette:</label>
+            <div class="palette-grid" id="paletteGrid">
+                <div class="palette-option" data-palette="original">
+                    <div class="palette-preview">
+                        <div style="background: #1a1a1a; flex: 1;"></div>
+                        <div style="background: #fff; flex: 1;"></div>
+                    </div>
+                    <div class="palette-name">ORIGINAL</div>
+                </div>
+                
+                <div class="palette-option" data-palette="void">
+                    <div class="palette-preview">
+                        <div style="background: #0E0E0E; flex: 1;"></div>
+                        <div style="background: #E7E7E5; flex: 1;"></div>
+                    </div>
+                    <div class="palette-name">VOID</div>
+                </div>
+                
+                <div class="palette-option" data-palette="twilight">
+                    <div class="palette-preview">
+                        <div style="background: #363435; flex: 1;"></div>
+                        <div style="background: #C6728A; flex: 1;"></div>
+                    </div>
+                    <div class="palette-name">TWILIGHT</div>
+                </div>
+                
+                <div class="palette-option" data-palette="ethereal">
+                    <div class="palette-preview">
+                        <div style="background: #000000; flex: 1;"></div>
+                        <div style="background: #C1DDAD; flex: 1;"></div>
+                    </div>
+                    <div class="palette-name">ETHEREAL</div>
+                </div>
+            </div>
+            
+            <label style="margin-top: 30px;">Wallpaper:</label>
+            <input type="file" id="settingsWallpaperImage" accept="image/*">
+            <button class="file-button" id="settingsWallpaperBtn">Choose Image</button>
+            <button class="paste-button" id="settingsWallpaperPaste">Paste from Clipboard</button>
+            
+            <div class="checkbox-container" id="settingsWallpaperDitherContainer" style="display: none;">
+                <input type="checkbox" id="settingsWallpaperDither">
+                <label for="settingsWallpaperDither">Apply dither effect</label>
+            </div>
+            
+            <div class="icon-preview" id="settingsWallpaperPreview" style="width: 200px; height: 150px; display: none;"></div>
+            
+            <div class="modal-buttons">
+                <button class="modal-button" id="settingsResetWallpaper">Reset Wallpaper</button>
+                <button class="modal-button primary" id="settingsClose">Save</button>
+            </div>
+        </div>
+    </div>
+
+    <script>
+        // Initial artifacts data
+        const artifacts = [
+            { name: 'human.exe', url: 'https://nostalgiasvg.github.io/human.exe/', x: 20, y: 160 },
+            { name: 'pixel-artsy', url: 'https://nostalgiasvg.github.io/pixel-artsy/', x: 20, y: 20 },
+            { name: 'trace-me [mobile]', url: 'https://nostalgiasvg.github.io/trace-me/', x: 260, y: 20 },
+            { name: 'impressionism-me', url: 'https://nostalgiasvg.github.io/impressionism-me/', x: 140, y: 160 },
+            { name: 'fortune-machine [WIP]', url: '#', x: 260, y: 160 },
+            { name: 'random-thoughts', type: 'folder', x: 380, y: 160 }
+        ];
+
+        let windows = [];
+        let currentEditingIcon = null;
+        let draggedWindow = null;
+        let dragOffset = { x: 0, y: 0 };
+        let windowZIndex = 1000;
+        let currentImageData = null;
+        let currentWallpaperData = null;
+
+        // LocalStorage keys
+        const STORAGE_KEY = 'maria-os-artifacts';
+        const WALLPAPER_KEY = 'maria-os-wallpaper';
+        const PALETTE_KEY = 'maria-os-palette';
+        const KAOMOJI_KEY = 'maria-os-kaomoji';
+        const NOTES_KEY = 'maria-os-notes';
+
+        // Initialize notes with READ ME
+        function initializeNotes() {
+            let notes = JSON.parse(localStorage.getItem(NOTES_KEY) || '[]');
+            
+            // Add READ ME if it doesn't exist
+            if (!notes.find(n => n.name === 'READ ME')) {
+                notes.unshift({
+                    name: 'READ ME',
+                    content: `Te doy la bienvenida ✧
+
+Este es un espacio personal fuera de bases de datos y algoritmos.
+
+El espacio que permite que esto no guarde nada fuera de tu ordenador se llama local storage y, por lo tanto, no permite guardar contenido muy extenso.
+
+Tenlo en cuenta para crear tus pequeñas notas pero no permitas que nada se pierda. 
+
+¡Disfruta de la calma y el control!
+
+
+ _   _           _        _       _         ______     ______ 
+| \\ | | ___  ___| |_ __ _| | __ _(_) __ _  / ___\\ \\   / / ___|
+|  \\| |/ _ \\/ __| __/ _\` | |/ _\` | |/ _\` | \\___ \\\\ \\ / / |  _ 
+| |\\  | (_) \\__ \\ || (_| | | (_| | | (_| |_ ___) |\\ V /| |_| |
+|_| \\_|\\___/|___/\\__\\__,_|_|\\__, |_|\\__,_(_)____/  \\_/  \\____|
+                            |___/                             `,
+                    created: new Date().toISOString()
+                });
+                saveNotes(notes);
+            }
+            
+            return notes;
+        }
+
+        function saveNotes(notes) {
+            try {
+                localStorage.setItem(NOTES_KEY, JSON.stringify(notes));
+            } catch (e) {
+                if (e.name === 'QuotaExceededError') {
+                    alert('⚠️ Storage full! Cannot save note. Please delete old notes to free up space.');
+                } else {
+                    console.error('Error saving notes:', e);
+                    alert('Error saving note. Please try again.');
+                }
+                throw e;
+            }
+        }
+
+        function getNotes() {
+            return JSON.parse(localStorage.getItem(NOTES_KEY) || '[]');
+        }
+
+        // Kaomoji list
+        const kaomojiList = [
+            'ฅ^•ﻌ•^ฅ',
+            '(•˕ •マ.ᐟ',
+            '>^..^<',
+            '₍^._.^₎ 𐒡',
+            '/ᐠ_ ꞈ _ᐟ\\',
+            '⋆𐙚₊˚⊹♡',
+            '⋆౨ৎ˚⟡˖ ࣪',
+            '꒰ᐢ. .ᐢ꒱₊˚⊹',
+            '૮ ․ ․ ྀིა',
+            '𐔌՞. .՞𐦯'
+        ];
+
+        // Load saved data
+        function loadSavedData() {
+            const saved = localStorage.getItem(STORAGE_KEY);
+            if (saved) {
+                try {
+                    const savedArtifacts = JSON.parse(saved);
+                    // Merge saved data with default artifacts
+                    savedArtifacts.forEach((saved, index) => {
+                        if (artifacts[index]) {
+                            artifacts[index].name = saved.name || artifacts[index].name;
+                            artifacts[index].url = saved.url || artifacts[index].url;
+                            artifacts[index].customImage = saved.customImage || artifacts[index].customImage;
+                            artifacts[index].ditherApplied = saved.ditherApplied || false;
+                        }
+                    });
+                } catch (e) {
+                    console.error('Error loading saved data:', e);
+                }
+            }
+
+            // Load wallpaper
+            const savedWallpaper = localStorage.getItem(WALLPAPER_KEY);
+            if (savedWallpaper) {
+                const desktop = document.getElementById('desktop');
+                desktop.style.backgroundImage = `url(${savedWallpaper})`;
+                desktop.style.backgroundSize = 'cover';
+                desktop.style.backgroundPosition = 'center';
+            }
+
+            // Load palette
+            const savedPalette = localStorage.getItem(PALETTE_KEY);
+            if (savedPalette && savedPalette !== 'original') {
+                document.body.className = savedPalette;
+            }
+            updateActivePalette();
+
+            // Load kaomoji
+            const savedKaomoji = localStorage.getItem(KAOMOJI_KEY);
+            if (savedKaomoji) {
+                document.getElementById('cat').textContent = savedKaomoji;
+            }
+        }
+
+        // Save data to localStorage
+        function saveData() {
+            try {
+                localStorage.setItem(STORAGE_KEY, JSON.stringify(artifacts));
+            } catch (e) {
+                console.error('Error saving data:', e);
+                alert('Could not save data. Storage might be full.');
+            }
+        }
+
+        // Dither image function
+        function ditherImage(img, targetWidth = 80, targetHeight = 80) {
+            const canvas = document.createElement('canvas');
+            const ctx = canvas.getContext('2d');
+            canvas.width = targetWidth;
+            canvas.height = targetHeight;
+
+            // Draw image scaled
+            ctx.drawImage(img, 0, 0, targetWidth, targetHeight);
+            
+            // Get image data
+            const imageData = ctx.getImageData(0, 0, targetWidth, targetHeight);
+            const data = imageData.data;
+
+            // Get current theme colors
+            const styles = getComputedStyle(document.body);
+            const darkColor = styles.getPropertyValue('--text-secondary').trim();
+            const lightColor = styles.getPropertyValue('--accent-primary').trim();
+            
+            // Convert hex to RGB
+            const darkRGB = hexToRgb(darkColor);
+            const lightRGB = hexToRgb(lightColor);
+
+            // Floyd-Steinberg dithering with palette colors
+            for (let y = 0; y < targetHeight; y++) {
+                for (let x = 0; x < targetWidth; x++) {
+                    const i = (y * targetWidth + x) * 4;
+                    
+                    // Convert to grayscale
+                    const gray = data[i] * 0.299 + data[i + 1] * 0.587 + data[i + 2] * 0.114;
+                    
+                    // Choose palette color based on threshold
+                    const useLight = gray > 128;
+                    const newColor = useLight ? lightRGB : darkRGB;
+                    const error = gray - (useLight ? 255 : 0);
+                    
+                    // Set pixel to palette color
+                    data[i] = newColor.r;
+                    data[i + 1] = newColor.g;
+                    data[i + 2] = newColor.b;
+                    
+                    // Distribute error to neighboring pixels
+                    if (x + 1 < targetWidth) {
+                        const ni = (y * targetWidth + (x + 1)) * 4;
+                        data[ni] += error * 7 / 16;
+                        data[ni + 1] += error * 7 / 16;
+                        data[ni + 2] += error * 7 / 16;
+                    }
+                    if (y + 1 < targetHeight) {
+                        if (x > 0) {
+                            const ni = ((y + 1) * targetWidth + (x - 1)) * 4;
+                            data[ni] += error * 3 / 16;
+                            data[ni + 1] += error * 3 / 16;
+                            data[ni + 2] += error * 3 / 16;
+                        }
+                        const ni = ((y + 1) * targetWidth + x) * 4;
+                        data[ni] += error * 5 / 16;
+                        data[ni + 1] += error * 5 / 16;
+                        data[ni + 2] += error * 5 / 16;
+                        
+                        if (x + 1 < targetWidth) {
+                            const ni = ((y + 1) * targetWidth + (x + 1)) * 4;
+                            data[ni] += error * 1 / 16;
+                            data[ni + 1] += error * 1 / 16;
+                            data[ni + 2] += error * 1 / 16;
+                        }
+                    }
+                }
+            }
+            
+            ctx.putImageData(imageData, 0, 0);
+            return canvas.toDataURL();
+        }
+
+        // Helper function to convert hex to RGB
+        function hexToRgb(hex) {
+            // Remove # if present and trim whitespace
+            hex = hex.replace('#', '').trim();
+            
+            // Handle 3-digit hex
+            if (hex.length === 3) {
+                hex = hex[0] + hex[0] + hex[1] + hex[1] + hex[2] + hex[2];
+            }
+            
+            // Parse hex values
+            const r = parseInt(hex.substring(0, 2), 16);
+            const g = parseInt(hex.substring(2, 4), 16);
+            const b = parseInt(hex.substring(4, 6), 16);
+            
+            // Validate
+            if (isNaN(r) || isNaN(g) || isNaN(b)) {
+                console.error('Invalid color:', hex);
+                // Return default black if parsing fails
+                return { r: 0, g: 0, b: 0 };
+            }
+            
+            return { r, g, b };
+        }
+
+        // Create dithered pattern for icons
+        function createDitheredIcon(text, canvas) {
+            const ctx = canvas.getContext('2d');
+            const size = 80;
+            canvas.width = size;
+            canvas.height = size;
+
+            // Get current theme colors
+            const styles = getComputedStyle(document.body);
+            const bgColor = styles.getPropertyValue('--accent-primary').trim();
+            const textColor = styles.getPropertyValue('--text-secondary').trim();
+
+            // Fill background
+            ctx.fillStyle = bgColor;
+            ctx.fillRect(0, 0, size, size);
+
+            // Create dither pattern
+            ctx.fillStyle = textColor;
+            for (let y = 0; y < size; y += 2) {
+                for (let x = 0; x < size; x += 4) {
+                    ctx.fillRect(x + (y % 4), y, 2, 2);
+                }
+            }
+
+            // Draw text
+            ctx.fillStyle = textColor;
+            ctx.font = 'bold 28px Courier';
+            ctx.textAlign = 'center';
+            ctx.textBaseline = 'middle';
+            ctx.fillText(text, size / 2, size / 2);
+        }
+
+        // Create icon element
+        function createIcon(artifact, index) {
+            const icon = document.createElement('div');
+            icon.className = 'icon';
+            icon.style.left = artifact.x + 'px';
+            icon.style.top = artifact.y + 'px';
+            icon.dataset.index = index;
+
+            const iconImage = document.createElement('div');
+            iconImage.className = 'icon-image';
+
+            if (artifact.customImage && artifact.customImage.length > 0) {
+                if (artifact.ditherApplied) {
+                    // Apply dither dynamically with current palette colors
+                    const tempImg = new Image();
+                    tempImg.onload = () => {
+                        const dithered = ditherImage(tempImg, 80, 80);
+                        const ditheredImg = document.createElement('img');
+                        ditheredImg.src = dithered;
+                        ditheredImg.style.width = '100%';
+                        ditheredImg.style.height = '100%';
+                        ditheredImg.style.objectFit = 'cover';
+                        iconImage.innerHTML = ''; // Clear any placeholder
+                        iconImage.appendChild(ditheredImg);
+                    };
+                    tempImg.onerror = () => {
+                        console.error('Error loading icon image for', artifact.name);
+                        // Fallback to text icon
+                        const canvas = document.createElement('canvas');
+                        const initials = artifact.name.split('-').map(w => w[0]).join('').toUpperCase().slice(0, 3);
+                        createDitheredIcon(initials, canvas);
+                        iconImage.innerHTML = '';
+                        iconImage.appendChild(canvas);
+                    };
+                    tempImg.src = artifact.customImage;
+                } else {
+                    // Use original image without dither
+                    const img = document.createElement('img');
+                    img.src = artifact.customImage;
+                    img.style.width = '100%';
+                    img.style.height = '100%';
+                    img.style.objectFit = 'cover';
+                    img.onerror = () => {
+                        console.error('Error loading icon image for', artifact.name);
+                        // Fallback to text icon
+                        const canvas = document.createElement('canvas');
+                        const initials = artifact.name.split('-').map(w => w[0]).join('').toUpperCase().slice(0, 3);
+                        createDitheredIcon(initials, canvas);
+                        iconImage.innerHTML = '';
+                        iconImage.appendChild(canvas);
+                    };
+                    iconImage.appendChild(img);
+                }
+            } else {
+                // Use dithered text for all icons including folders without custom images
+                const canvas = document.createElement('canvas');
+                const initials = artifact.name.split('-').map(w => w[0]).join('').toUpperCase().slice(0, 3);
+                createDitheredIcon(initials, canvas);
+                iconImage.appendChild(canvas);
+            }
+
+            const iconLabel = document.createElement('div');
+            iconLabel.className = 'icon-label';
+            iconLabel.textContent = artifact.name;
+
+            icon.appendChild(iconImage);
+            icon.appendChild(iconLabel);
+
+            // Double click to open
+            icon.addEventListener('dblclick', () => {
+                if (artifact.type === 'folder') {
+                    openFolder(artifact, index);
+                } else {
+                    openWindow(artifact, index);
+                }
+            });
+
+            // Right click for context menu (including folders now)
+            icon.addEventListener('contextmenu', (e) => {
+                e.preventDefault();
+                showContextMenu(e.clientX, e.clientY, index);
+            });
+
+            return icon;
+        }
+
+        // Open window
+        function openWindow(artifact, index) {
+            // Check if window already exists
+            let existingWindow = windows.find(w => w.index === index);
+            if (existingWindow) {
+                if (existingWindow.element.classList.contains('minimized')) {
+                    existingWindow.element.classList.remove('minimized');
+                    updateTaskbar();
+                }
+                existingWindow.element.style.zIndex = ++windowZIndex;
+                return;
+            }
+
+            const window = document.createElement('div');
+            window.className = 'window active';
+            window.style.left = (100 + windows.length * 30) + 'px';
+            window.style.top = (100 + windows.length * 30) + 'px';
+            window.style.width = '800px';
+            window.style.height = '600px';
+            window.style.zIndex = ++windowZIndex;
+            window.dataset.index = index;
+
+            const titleBar = document.createElement('div');
+            titleBar.className = 'window-title-bar';
+
+            const title = document.createElement('div');
+            title.className = 'window-title';
+            title.textContent = artifact.name;
+
+            const controls = document.createElement('div');
+            controls.className = 'window-controls';
+
+            const minimizeBtn = document.createElement('div');
+            minimizeBtn.className = 'window-button minimize';
+            minimizeBtn.addEventListener('click', () => minimizeWindow(window, index));
+
+            const maximizeBtn = document.createElement('div');
+            maximizeBtn.className = 'window-button maximize';
+            maximizeBtn.addEventListener('click', () => toggleMaximize(window));
+
+            const closeBtn = document.createElement('div');
+            closeBtn.className = 'window-button close';
+            closeBtn.addEventListener('click', () => closeWindow(window, index));
+
+            controls.appendChild(minimizeBtn);
+            controls.appendChild(maximizeBtn);
+            controls.appendChild(closeBtn);
+            titleBar.appendChild(title);
+            titleBar.appendChild(controls);
+
+            const content = document.createElement('div');
+            content.className = 'window-content';
+
+            const iframe = document.createElement('iframe');
+            iframe.src = artifact.url;
+            content.appendChild(iframe);
+
+            window.appendChild(titleBar);
+            window.appendChild(content);
+
+            // Make window draggable
+            titleBar.addEventListener('mousedown', startDrag);
+
+            // Bring to front on click
+            window.addEventListener('mousedown', () => {
+                window.style.zIndex = ++windowZIndex;
+            });
+
+            document.body.appendChild(window);
+            windows.push({ element: window, index: index, artifact: artifact });
+            updateTaskbar();
+        }
+
+        // Close window
+        function closeWindow(window, index) {
+            window.remove();
+            windows = windows.filter(w => w.index !== index);
+            updateTaskbar();
+        }
+
+        // Open folder view
+        function openFolder(artifact, index) {
+            const window = document.createElement('div');
+            window.className = 'window active';
+            window.style.left = '150px';
+            window.style.top = '100px';
+            window.style.width = '600px';
+            window.style.height = '500px';
+            window.style.zIndex = ++windowZIndex;
+            window.dataset.index = index;
+
+            const titleBar = document.createElement('div');
+            titleBar.className = 'window-title-bar';
+
+            const title = document.createElement('div');
+            title.className = 'window-title';
+            title.textContent = artifact.name;
+
+            const controls = document.createElement('div');
+            controls.className = 'window-controls';
+
+            const minimizeBtn = document.createElement('div');
+            minimizeBtn.className = 'window-button minimize';
+            minimizeBtn.addEventListener('click', () => minimizeWindow(window, index));
+
+            const maximizeBtn = document.createElement('div');
+            maximizeBtn.className = 'window-button maximize';
+            maximizeBtn.addEventListener('click', () => toggleMaximize(window));
+
+            const closeBtn = document.createElement('div');
+            closeBtn.className = 'window-button close';
+            closeBtn.addEventListener('click', () => closeWindow(window, index));
+
+            controls.appendChild(minimizeBtn);
+            controls.appendChild(maximizeBtn);
+            controls.appendChild(closeBtn);
+            titleBar.appendChild(title);
+            titleBar.appendChild(controls);
+
+            const content = document.createElement('div');
+            content.className = 'window-content';
+
+            const folderView = createFolderView();
+            content.appendChild(folderView);
+
+            window.appendChild(titleBar);
+            window.appendChild(content);
+
+            titleBar.addEventListener('mousedown', startDrag);
+            window.addEventListener('mousedown', () => {
+                window.style.zIndex = ++windowZIndex;
+            });
+
+            document.body.appendChild(window);
+            windows.push({ element: window, index: index, artifact: artifact });
+            updateTaskbar();
+        }
+
+        // Create folder view
+        function createFolderView() {
+            const folderView = document.createElement('div');
+            folderView.className = 'folder-view';
+
+            const header = document.createElement('div');
+            header.className = 'folder-header';
+            header.textContent = 'Random Thoughts';
+
+            // New note button
+            const newNoteBtn = document.createElement('button');
+            newNoteBtn.className = 'note-editor-button';
+            newNoteBtn.textContent = '+ New Note';
+            newNoteBtn.style.marginBottom = '20px';
+            newNoteBtn.addEventListener('click', () => {
+                openNoteEditor(null, null);
+            });
+
+            const items = document.createElement('div');
+            items.className = 'folder-items';
+
+            const notes = getNotes();
+
+            if (notes.length === 0) {
+                const empty = document.createElement('div');
+                empty.className = 'folder-empty';
+                empty.textContent = 'No notes yet. Click "+ New Note" to create one.';
+                items.appendChild(empty);
+            } else {
+                notes.forEach((note, noteIndex) => {
+                    const item = document.createElement('div');
+                    item.className = 'folder-item';
+
+                    const name = document.createElement('span');
+                    name.textContent = note.name;
+
+                    const actions = document.createElement('div');
+                    actions.className = 'folder-item-actions';
+
+                    const deleteBtn = document.createElement('button');
+                    deleteBtn.className = 'folder-item-delete';
+                    deleteBtn.textContent = 'DELETE';
+                    deleteBtn.addEventListener('click', (e) => {
+                        e.stopPropagation();
+                        if (confirm(`Delete "${note.name}"?`)) {
+                            deleteNote(noteIndex);
+                            // Refresh all folder windows
+                            refreshFolderWindows();
+                        }
+                    });
+
+                    actions.appendChild(deleteBtn);
+                    item.appendChild(name);
+                    item.appendChild(actions);
+
+                    item.addEventListener('click', () => {
+                        openNoteEditor(note, noteIndex);
+                    });
+
+                    items.appendChild(item);
+                });
+            }
+
+            folderView.appendChild(header);
+            folderView.appendChild(newNoteBtn);
+            folderView.appendChild(items);
+
+            return folderView;
+        }
+
+        // Refresh folder windows
+        function refreshFolderWindows() {
+            windows.forEach(w => {
+                if (w.artifact && w.artifact.type === 'folder') {
+                    const content = w.element.querySelector('.window-content');
+                    content.innerHTML = '';
+                    content.appendChild(createFolderView());
+                }
+            });
+        }
+
+        // Delete note
+        function deleteNote(noteIndex) {
+            const notes = getNotes();
+            notes.splice(noteIndex, 1);
+            saveNotes(notes);
+        }
+
+        // Open note editor
+        function openNoteEditor(note, noteIndex) {
+            const window = document.createElement('div');
+            window.className = 'window active';
+            window.style.left = (200 + windows.length * 30) + 'px';
+            window.style.top = (150 + windows.length * 30) + 'px';
+            window.style.width = '700px';
+            window.style.height = '600px';
+            window.style.zIndex = ++windowZIndex;
+
+            const titleBar = document.createElement('div');
+            titleBar.className = 'window-title-bar';
+
+            const title = document.createElement('div');
+            title.className = 'window-title';
+            title.textContent = note ? note.name : 'New Note';
+
+            const controls = document.createElement('div');
+            controls.className = 'window-controls';
+
+            const minimizeBtn = document.createElement('div');
+            minimizeBtn.className = 'window-button minimize';
+            minimizeBtn.addEventListener('click', () => minimizeWindow(window, -1));
+
+            const maximizeBtn = document.createElement('div');
+            maximizeBtn.className = 'window-button maximize';
+            maximizeBtn.addEventListener('click', () => toggleMaximize(window));
+
+            const closeBtn = document.createElement('div');
+            closeBtn.className = 'window-button close';
+            closeBtn.addEventListener('click', () => {
+                window.remove();
+                windows = windows.filter(w => w.element !== window);
+                updateTaskbar();
+            });
+
+            controls.appendChild(minimizeBtn);
+            controls.appendChild(maximizeBtn);
+            controls.appendChild(closeBtn);
+            titleBar.appendChild(title);
+            titleBar.appendChild(controls);
+
+            const content = document.createElement('div');
+            content.className = 'window-content';
+
+            const editor = createNoteEditor(note, noteIndex);
+            content.appendChild(editor);
+
+            window.appendChild(titleBar);
+            window.appendChild(content);
+
+            titleBar.addEventListener('mousedown', startDrag);
+            window.addEventListener('mousedown', () => {
+                window.style.zIndex = ++windowZIndex;
+            });
+
+            document.body.appendChild(window);
+            windows.push({ element: window, index: -1, artifact: { type: 'note' } });
+            updateTaskbar();
+        }
+
+        // Create note editor
+        function createNoteEditor(note, noteIndex) {
+            const editor = document.createElement('div');
+            editor.className = 'note-editor';
+
+            const toolbar = document.createElement('div');
+            toolbar.className = 'note-editor-toolbar';
+
+            const nameInput = document.createElement('input');
+            nameInput.className = 'note-editor-input';
+            nameInput.type = 'text';
+            nameInput.placeholder = 'Note name...';
+            nameInput.value = note ? note.name : '';
+
+            const saveBtn = document.createElement('button');
+            saveBtn.className = 'note-editor-button';
+            saveBtn.textContent = 'Save';
+
+            toolbar.appendChild(nameInput);
+            toolbar.appendChild(saveBtn);
+
+            const textarea = document.createElement('textarea');
+            textarea.className = 'note-editor-textarea';
+            textarea.placeholder = 'Start writing...';
+            textarea.value = note ? note.content : '';
+
+            editor.appendChild(toolbar);
+            editor.appendChild(textarea);
+
+            saveBtn.addEventListener('click', () => {
+                const name = nameInput.value.trim();
+                const content = textarea.value;
+
+                if (!name) {
+                    alert('Please enter a note name');
+                    return;
+                }
+
+                try {
+                    const notes = getNotes();
+                    
+                    if (note) {
+                        // Update existing note
+                        notes[noteIndex] = {
+                            name: name,
+                            content: content,
+                            created: note.created,
+                            modified: new Date().toISOString()
+                        };
+                    } else {
+                        // Create new note
+                        notes.push({
+                            name: name,
+                            content: content,
+                            created: new Date().toISOString()
+                        });
+                    }
+
+                    saveNotes(notes);
+                    alert('✓ Note saved!');
+                    refreshFolderWindows();
+                } catch (e) {
+                    // Error already shown by saveNotes
+                }
+            });
+
+            return editor;
+        }
+
+        // Minimize window
+        function minimizeWindow(window, index) {
+            window.classList.add('minimized');
+            updateTaskbar();
+        }
+
+        // Restore window from taskbar
+        function restoreWindow(index) {
+            const windowObj = windows.find(w => w.index === index);
+            if (windowObj) {
+                windowObj.element.classList.remove('minimized');
+                windowObj.element.style.zIndex = ++windowZIndex;
+                updateTaskbar();
+            }
+        }
+
+        // Toggle maximize window
+        function toggleMaximize(window) {
+            if (window.classList.contains('maximized')) {
+                window.classList.remove('maximized');
+            } else {
+                window.classList.add('maximized');
+            }
+        }
+
+        // Update taskbar with minimized windows
+        function updateTaskbar() {
+            const taskbar = document.getElementById('taskbar');
+            taskbar.innerHTML = '';
+            
+            windows.forEach(w => {
+                if (w.element.classList.contains('minimized')) {
+                    const item = document.createElement('div');
+                    item.className = 'taskbar-item';
+                    item.textContent = w.artifact.name;
+                    item.addEventListener('click', () => restoreWindow(w.index));
+                    taskbar.appendChild(item);
+                }
+            });
+        }
+
+        // Window dragging
+        function startDrag(e) {
+            draggedWindow = e.target.closest('.window');
+            // Don't drag if maximized
+            if (draggedWindow.classList.contains('maximized')) {
+                draggedWindow = null;
+                return;
+            }
+            const rect = draggedWindow.getBoundingClientRect();
+            dragOffset.x = e.clientX - rect.left;
+            dragOffset.y = e.clientY - rect.top;
+            draggedWindow.style.zIndex = ++windowZIndex;
+        }
+
+        document.addEventListener('mousemove', (e) => {
+            if (draggedWindow) {
+                draggedWindow.style.left = (e.clientX - dragOffset.x) + 'px';
+                draggedWindow.style.top = (e.clientY - dragOffset.y) + 'px';
+            }
+        });
+
+        document.addEventListener('mouseup', () => {
+            draggedWindow = null;
+        });
+
+        // Context menu
+        function showContextMenu(x, y, index) {
+            const menu = document.getElementById('contextMenu');
+            menu.style.left = x + 'px';
+            menu.style.top = y + 'px';
+            menu.classList.add('active');
+            
+            currentEditingIcon = index;
+        }
+
+        document.getElementById('contextOpen').addEventListener('click', () => {
+            if (currentEditingIcon !== null) {
+                openWindow(artifacts[currentEditingIcon], currentEditingIcon);
+            }
+            document.getElementById('contextMenu').classList.remove('active');
+        });
+
+        document.getElementById('contextOpenNewTab').addEventListener('click', () => {
+            if (currentEditingIcon !== null) {
+                window.open(artifacts[currentEditingIcon].url, '_blank');
+            }
+            document.getElementById('contextMenu').classList.remove('active');
+        });
+
+        document.getElementById('contextEdit').addEventListener('click', () => {
+            if (currentEditingIcon !== null) {
+                openEditModal(currentEditingIcon);
+            }
+            document.getElementById('contextMenu').classList.remove('active');
+        });
+
+        document.addEventListener('click', (e) => {
+            if (!e.target.closest('.context-menu')) {
+                document.getElementById('contextMenu').classList.remove('active');
+                document.getElementById('desktopContextMenu').classList.remove('active');
+                document.getElementById('menuBarContextMenu').classList.remove('active');
+            }
+        });
+
+        // Menu bar right-click for kaomoji
+        document.querySelector('.menu-bar').addEventListener('contextmenu', (e) => {
+            e.preventDefault();
+            const menu = document.getElementById('menuBarContextMenu');
+            menu.style.left = e.clientX + 'px';
+            menu.style.top = e.clientY + 'px';
+            menu.classList.add('active');
+        });
+
+        // Open kaomoji modal
+        document.getElementById('changeKaomoji').addEventListener('click', () => {
+            document.getElementById('kaomojiModal').classList.add('active');
+            document.getElementById('menuBarContextMenu').classList.remove('active');
+            populateKaomojiGrid();
+        });
+
+        // Close kaomoji modal
+        document.getElementById('kaomojiClose').addEventListener('click', () => {
+            document.getElementById('kaomojiModal').classList.remove('active');
+        });
+
+        // Populate kaomoji grid
+        function populateKaomojiGrid() {
+            const grid = document.getElementById('kaomojiGrid');
+            const currentKaomoji = document.getElementById('cat').textContent;
+            grid.innerHTML = '';
+            
+            kaomojiList.forEach(kaomoji => {
+                const option = document.createElement('div');
+                option.className = 'kaomoji-option';
+                option.textContent = kaomoji;
+                
+                if (kaomoji === currentKaomoji) {
+                    option.classList.add('active');
+                }
+                
+                option.addEventListener('click', () => {
+                    document.getElementById('cat').textContent = kaomoji;
+                    localStorage.setItem(KAOMOJI_KEY, kaomoji);
+                    
+                    // Update active state
+                    document.querySelectorAll('.kaomoji-option').forEach(opt => {
+                        opt.classList.remove('active');
+                    });
+                    option.classList.add('active');
+                });
+                
+                grid.appendChild(option);
+            });
+        }
+
+        // Desktop right-click for settings
+        document.getElementById('desktop').addEventListener('contextmenu', (e) => {
+            if (e.target.id === 'desktop') {
+                e.preventDefault();
+                const menu = document.getElementById('desktopContextMenu');
+                menu.style.left = e.clientX + 'px';
+                menu.style.top = e.clientY + 'px';
+                menu.classList.add('active');
+            }
+        });
+
+        // Open settings modal
+        document.getElementById('openSettings').addEventListener('click', () => {
+            document.getElementById('settingsModal').classList.add('active');
+            document.getElementById('desktopContextMenu').classList.remove('active');
+        });
+
+        // Close settings
+        document.getElementById('settingsClose').addEventListener('click', () => {
+            document.getElementById('settingsModal').classList.remove('active');
+            currentWallpaperData = null;
+        });
+
+        // Palette selection
+        document.querySelectorAll('.palette-option').forEach(option => {
+            option.addEventListener('click', () => {
+                const palette = option.dataset.palette;
+                if (palette === 'original') {
+                    document.body.className = '';
+                } else {
+                    document.body.className = palette;
+                }
+                localStorage.setItem(PALETTE_KEY, palette);
+                updateActivePalette();
+                refreshDesktop(); // Refresh to update icon colors
+            });
+        });
+
+        function updateActivePalette() {
+            const currentPalette = localStorage.getItem(PALETTE_KEY) || 'original';
+            document.querySelectorAll('.palette-option').forEach(option => {
+                if (option.dataset.palette === currentPalette) {
+                    option.classList.add('active');
+                } else {
+                    option.classList.remove('active');
+                }
+            });
+        }
+
+        // Settings wallpaper image upload
+        document.getElementById('settingsWallpaperImage').addEventListener('change', (e) => {
+            const file = e.target.files[0];
+            if (file) {
+                const reader = new FileReader();
+                reader.onload = (e) => {
+                    currentWallpaperData = e.target.result;
+                    // Show dither controls
+                    document.getElementById('settingsWallpaperDitherContainer').style.display = 'flex';
+                    document.getElementById('settingsWallpaperPreview').style.display = 'block';
+                    updateSettingsWallpaperPreview();
+                };
+                reader.readAsDataURL(file);
+            }
+        });
+
+        // Click handler for settings wallpaper button
+        document.getElementById('settingsWallpaperBtn').addEventListener('click', () => {
+            document.getElementById('settingsWallpaperImage').click();
+        });
+
+        // Settings wallpaper paste
+        document.getElementById('settingsWallpaperPaste').addEventListener('click', async () => {
+            try {
+                const clipboardItems = await navigator.clipboard.read();
+                for (const item of clipboardItems) {
+                    for (const type of item.types) {
+                        if (type.startsWith('image/')) {
+                            const blob = await item.getType(type);
+                            const reader = new FileReader();
+                            reader.onload = (e) => {
+                                currentWallpaperData = e.target.result;
+                                // Show dither controls
+                                document.getElementById('settingsWallpaperDitherContainer').style.display = 'flex';
+                                document.getElementById('settingsWallpaperPreview').style.display = 'block';
+                                updateSettingsWallpaperPreview();
+                            };
+                            reader.readAsDataURL(blob);
+                            return;
+                        }
+                    }
+                }
+                alert('No image found in clipboard');
+            } catch (err) {
+                alert('Could not access clipboard. Try using Ctrl+V or Cmd+V');
+            }
+        });
+
+        // Settings wallpaper dither toggle
+        document.getElementById('settingsWallpaperDither').addEventListener('change', () => {
+            if (currentWallpaperData) {
+                updateSettingsWallpaperPreview();
+            }
+        });
+
+        function updateSettingsWallpaperPreview() {
+            const preview = document.getElementById('settingsWallpaperPreview');
+            const shouldDither = document.getElementById('settingsWallpaperDither').checked;
+            
+            preview.innerHTML = '';
+            
+            if (currentWallpaperData) {
+                const img = new Image();
+                img.onload = () => {
+                    if (shouldDither) {
+                        const targetWidth = 200;
+                        const aspectRatio = img.height / img.width;
+                        const targetHeight = Math.round(targetWidth * aspectRatio);
+                        
+                        const dithered = ditherImage(img, targetWidth, targetHeight);
+                        const previewImg = document.createElement('img');
+                        previewImg.src = dithered;
+                        preview.appendChild(previewImg);
+                    } else {
+                        const previewImg = document.createElement('img');
+                        previewImg.src = currentWallpaperData;
+                        preview.appendChild(previewImg);
+                    }
+                    
+                    // Auto-apply wallpaper
+                    applyWallpaper();
+                };
+                img.src = currentWallpaperData;
+            }
+        }
+
+        function applyWallpaper() {
+            if (currentWallpaperData) {
+                const desktop = document.getElementById('desktop');
+                const shouldDither = document.getElementById('settingsWallpaperDither').checked;
+                
+                if (shouldDither) {
+                    const img = new Image();
+                    img.onload = () => {
+                        const targetWidth = window.innerWidth;
+                        const aspectRatio = img.height / img.width;
+                        const targetHeight = Math.round(targetWidth * aspectRatio);
+                        
+                        const dithered = ditherImage(img, targetWidth, targetHeight);
+                        desktop.style.backgroundImage = `url(${dithered})`;
+                        desktop.style.backgroundSize = 'cover';
+                        desktop.style.backgroundPosition = 'center';
+                        localStorage.setItem(WALLPAPER_KEY, dithered);
+                    };
+                    img.src = currentWallpaperData;
+                } else {
+                    desktop.style.backgroundImage = `url(${currentWallpaperData})`;
+                    desktop.style.backgroundSize = 'cover';
+                    desktop.style.backgroundPosition = 'center';
+                    localStorage.setItem(WALLPAPER_KEY, currentWallpaperData);
+                }
+            }
+        }
+
+        // Reset wallpaper
+        document.getElementById('settingsResetWallpaper').addEventListener('click', () => {
+            const desktop = document.getElementById('desktop');
+            desktop.style.backgroundImage = '';
+            desktop.style.backgroundSize = '';
+            desktop.style.backgroundPosition = '';
+            localStorage.removeItem(WALLPAPER_KEY);
+            currentWallpaperData = null;
+            document.getElementById('settingsWallpaperPreview').innerHTML = '';
+            document.getElementById('settingsWallpaperPreview').style.display = 'none';
+            document.getElementById('settingsWallpaperImage').value = '';
+            document.getElementById('settingsWallpaperDither').checked = false;
+            document.getElementById('settingsWallpaperDitherContainer').style.display = 'none';
+        });
+
+        // Edit modal
+        function openEditModal(index) {
+            const artifact = artifacts[index];
+            document.getElementById('editName').value = artifact.name;
+            document.getElementById('editUrl').value = artifact.url || '';
+            document.getElementById('editImage').value = '';
+            document.getElementById('ditherIconToggle').checked = artifact.ditherApplied || false;
+            
+            // Hide URL field for folders
+            const urlLabel = document.querySelector('label[for="editUrl"]');
+            const urlInput = document.getElementById('editUrl');
+            if (artifact.type === 'folder') {
+                if (urlLabel) urlLabel.style.display = 'none';
+                urlInput.style.display = 'none';
+            } else {
+                if (urlLabel) urlLabel.style.display = 'block';
+                urlInput.style.display = 'block';
+            }
+            
+            currentImageData = artifact.customImage || null;
+            
+            const preview = document.getElementById('iconPreview');
+            preview.innerHTML = '';
+            
+            if (artifact.customImage) {
+                const img = document.createElement('img');
+                img.src = artifact.customImage;
+                preview.appendChild(img);
+            }
+            
+            document.getElementById('editModal').classList.add('active');
+            currentEditingIcon = index;
+        }
+
+        document.getElementById('editImage').addEventListener('change', (e) => {
+            const file = e.target.files[0];
+            if (file) {
+                const reader = new FileReader();
+                reader.onload = (e) => {
+                    currentImageData = e.target.result;
+                    updateIconPreview();
+                };
+                reader.readAsDataURL(file);
+            }
+        });
+
+        // Click handler for edit image button
+        document.getElementById('editImageBtn').addEventListener('click', () => {
+            document.getElementById('editImage').click();
+        });
+
+        // Paste from clipboard for icons
+        document.getElementById('pasteImageBtn').addEventListener('click', async () => {
+            try {
+                const clipboardItems = await navigator.clipboard.read();
+                for (const item of clipboardItems) {
+                    for (const type of item.types) {
+                        if (type.startsWith('image/')) {
+                            const blob = await item.getType(type);
+                            const reader = new FileReader();
+                            reader.onload = (e) => {
+                                currentImageData = e.target.result;
+                                updateIconPreview();
+                            };
+                            reader.readAsDataURL(blob);
+                            return;
+                        }
+                    }
+                }
+                alert('No image found in clipboard');
+            } catch (err) {
+                alert('Could not access clipboard. Try using Ctrl+V or Cmd+V');
+            }
+        });
+
+        // Dither toggle for icons
+        document.getElementById('ditherIconToggle').addEventListener('change', () => {
+            if (currentImageData) {
+                updateIconPreview();
+            }
+        });
+
+        // Update icon preview
+        function updateIconPreview() {
+            const preview = document.getElementById('iconPreview');
+            const shouldDither = document.getElementById('ditherIconToggle').checked;
+            
+            preview.innerHTML = '';
+            
+            if (currentImageData) {
+                const img = new Image();
+                img.onload = () => {
+                    if (shouldDither) {
+                        const dithered = ditherImage(img, 80, 80);
+                        const previewImg = document.createElement('img');
+                        previewImg.src = dithered;
+                        preview.appendChild(previewImg);
+                    } else {
+                        const previewImg = document.createElement('img');
+                        previewImg.src = currentImageData;
+                        preview.appendChild(previewImg);
+                    }
+                };
+                img.src = currentImageData;
+            }
+        }
+
+        document.getElementById('cancelEdit').addEventListener('click', () => {
+            document.getElementById('editModal').classList.remove('active');
+            currentEditingIcon = null;
+        });
+
+        document.getElementById('saveEdit').addEventListener('click', () => {
+            if (currentEditingIcon !== null) {
+                const artifact = artifacts[currentEditingIcon];
+                artifact.name = document.getElementById('editName').value;
+                artifact.url = document.getElementById('editUrl').value;
+                
+                if (currentImageData) {
+                    const shouldDither = document.getElementById('ditherIconToggle').checked;
+                    
+                    // Store original image and dither preference
+                    artifact.customImage = currentImageData;
+                    artifact.ditherApplied = shouldDither;
+                    
+                    currentImageData = null;
+                    saveData();
+                    refreshDesktop();
+                } else {
+                    saveData();
+                    refreshDesktop();
+                }
+                
+                document.getElementById('editModal').classList.remove('active');
+                currentEditingIcon = null;
+            }
+        });
+
+        // Refresh desktop
+        function refreshDesktop() {
+            const desktop = document.getElementById('desktop');
+            desktop.innerHTML = '';
+            artifacts.forEach((artifact, index) => {
+                desktop.appendChild(createIcon(artifact, index));
+            });
+        }
+
+        // Clock
+        function updateClock() {
+            const now = new Date();
+            const hours = String(now.getHours()).padStart(2, '0');
+            const minutes = String(now.getMinutes()).padStart(2, '0');
+            document.getElementById('clock').textContent = `${hours}:${minutes}`;
+        }
+
+        // Initialize
+        initializeNotes(); // Initialize notes with READ ME
+        loadSavedData(); // Load saved icons, wallpaper, palette, and kaomoji
+        refreshDesktop();
+        updateClock();
+        setInterval(updateClock, 1000);
+    </script>
+</body>
+</html>
