@@ -772,6 +772,10 @@
             <button class="file-button" id="editImageBtn">Choose Image</button>
             <button class="paste-button" id="pasteImageBtn">Paste from Clipboard</button>
             
+            <label style="margin-top: 15px;">Or use Image URL:</label>
+            <input type="url" id="editImageUrl" placeholder="https://i.imgur.com/abc123.jpg">
+            <button class="file-button" id="useImageUrlBtn">Load from URL</button>
+            
             <div class="checkbox-container">
                 <input type="checkbox" id="ditherIconToggle">
                 <label for="ditherIconToggle">Apply dither effect</label>
@@ -1249,8 +1253,12 @@ Tenlo en cuenta para crear tus pequeñas notas pero no permitas que nada se pier
                 if (artifact.ditherApplied) {
                     // Apply dither dynamically with current palette colors
                     const tempImg = new Image();
+                    // Add crossOrigin for external URLs
+                    if (artifact.isImageUrl) {
+                        tempImg.crossOrigin = 'anonymous';
+                    }
                     tempImg.onload = () => {
-                        const dithered = ditherImage(tempImg, 64, 64);
+                        const dithered = ditherImage(tempImg, 72, 72);
                         const ditheredImg = document.createElement('img');
                         ditheredImg.src = dithered;
                         ditheredImg.style.width = '100%';
@@ -2053,6 +2061,7 @@ Tenlo en cuenta para crear tus pequeñas notas pero no permitas que nada se pier
             document.getElementById('editName').value = artifact.name;
             document.getElementById('editUrl').value = artifact.url || '';
             document.getElementById('editImage').value = '';
+            document.getElementById('editImageUrl').value = ''; // Clear image URL field
             document.getElementById('ditherIconToggle').checked = artifact.ditherApplied || false;
             
             // Hide URL field for folders
@@ -2122,6 +2131,36 @@ Tenlo en cuenta para crear tus pequeñas notas pero no permitas que nada se pier
             }
         });
 
+        // Load image from URL
+        document.getElementById('useImageUrlBtn').addEventListener('click', () => {
+            const imageUrl = document.getElementById('editImageUrl').value.trim();
+            if (!imageUrl) {
+                alert('Please enter an image URL');
+                return;
+            }
+            
+            // Validate URL format
+            try {
+                new URL(imageUrl);
+            } catch (e) {
+                alert('Please enter a valid URL (e.g., https://i.imgur.com/abc123.jpg)');
+                return;
+            }
+            
+            // Test if image loads
+            const testImg = new Image();
+            testImg.crossOrigin = 'anonymous'; // Try to avoid CORS issues
+            testImg.onload = () => {
+                // Store the URL directly (not the image data)
+                currentImageData = imageUrl;
+                updateIconPreview();
+            };
+            testImg.onerror = () => {
+                alert('Could not load image from URL. Make sure the URL is correct and publicly accessible.');
+            };
+            testImg.src = imageUrl;
+        });
+
         // Dither toggle for icons
         document.getElementById('ditherIconToggle').addEventListener('change', () => {
             if (currentImageData) {
@@ -2138,9 +2177,13 @@ Tenlo en cuenta para crear tus pequeñas notas pero no permitas que nada se pier
             
             if (currentImageData) {
                 const img = new Image();
+                // Add crossOrigin for external URLs
+                if (currentImageData.startsWith('http://') || currentImageData.startsWith('https://')) {
+                    img.crossOrigin = 'anonymous';
+                }
                 img.onload = () => {
                     if (shouldDither) {
-                        const dithered = ditherImage(img, 80, 80);
+                        const dithered = ditherImage(img, 72, 72);
                         const previewImg = document.createElement('img');
                         previewImg.src = dithered;
                         preview.appendChild(previewImg);
@@ -2168,39 +2211,52 @@ Tenlo en cuenta para crear tus pequeñas notas pero no permitas que nada se pier
                 if (currentImageData) {
                     const shouldDither = document.getElementById('ditherIconToggle').checked;
                     
-                    // Optimize image before saving
-                    const img = new Image();
-                    img.onload = () => {
-                        const canvas = document.createElement('canvas');
-                        const ctx = canvas.getContext('2d');
-                        
-                        // Reduce to max 64x64 for storage efficiency
-                        const maxSize = 64;
-                        if (img.width > maxSize || img.height > maxSize) {
-                            if (img.width > img.height) {
-                                canvas.width = maxSize;
-                                canvas.height = Math.round((img.height / img.width) * maxSize);
-                            } else {
-                                canvas.height = maxSize;
-                                canvas.width = Math.round((img.width / img.height) * maxSize);
-                            }
-                        } else {
-                            canvas.width = img.width;
-                            canvas.height = img.height;
-                        }
-                        
-                        ctx.drawImage(img, 0, 0, canvas.width, canvas.height);
-                        const optimized = canvas.toDataURL('image/jpeg', 0.85); // JPEG 85% quality
-                        
-                        // Store optimized image and dither preference
-                        artifact.customImage = optimized;
+                    // Check if it's a URL (starts with http/https)
+                    if (currentImageData.startsWith('http://') || currentImageData.startsWith('https://')) {
+                        // It's a URL - store directly without processing
+                        artifact.customImage = currentImageData;
                         artifact.ditherApplied = shouldDither;
+                        artifact.isImageUrl = true; // Flag to indicate it's a URL
                         
                         currentImageData = null;
                         saveData();
                         refreshDesktop();
-                    };
-                    img.src = currentImageData;
+                    } else {
+                        // It's base64 data - optimize before saving
+                        const img = new Image();
+                        img.onload = () => {
+                            const canvas = document.createElement('canvas');
+                            const ctx = canvas.getContext('2d');
+                            
+                            // Reduce to max 72x72 for storage efficiency
+                            const maxSize = 72;
+                            if (img.width > maxSize || img.height > maxSize) {
+                                if (img.width > img.height) {
+                                    canvas.width = maxSize;
+                                    canvas.height = Math.round((img.height / img.width) * maxSize);
+                                } else {
+                                    canvas.height = maxSize;
+                                    canvas.width = Math.round((img.width / img.height) * maxSize);
+                                }
+                            } else {
+                                canvas.width = img.width;
+                                canvas.height = img.height;
+                            }
+                            
+                            ctx.drawImage(img, 0, 0, canvas.width, canvas.height);
+                            const optimized = canvas.toDataURL('image/jpeg', 0.90); // JPEG 90% quality
+                            
+                            // Store optimized image and dither preference
+                            artifact.customImage = optimized;
+                            artifact.ditherApplied = shouldDither;
+                            artifact.isImageUrl = false;
+                            
+                            currentImageData = null;
+                            saveData();
+                            refreshDesktop();
+                        };
+                        img.src = currentImageData;
+                    }
                 } else {
                     saveData();
                     refreshDesktop();
