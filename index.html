@@ -1080,17 +1080,31 @@ Tenlo en cuenta para crear tus pequeñas notas pero no permitas que nada se pier
         }
 
         // Save data to localStorage
+        // Save data to localStorage with compression for images
         function saveData() {
             try {
-                localStorage.setItem(STORAGE_KEY, JSON.stringify(artifacts));
+                // Compress only if there are custom images
+                const hasImages = artifacts.some(a => a.customImage && a.customImage.length > 0);
+                
+                if (hasImages && typeof LZString !== 'undefined') {
+                    const compressed = LZString.compress(JSON.stringify(artifacts));
+                    localStorage.setItem(STORAGE_KEY, compressed);
+                } else {
+                    // No images or LZString not available, save as plain JSON
+                    localStorage.setItem(STORAGE_KEY, JSON.stringify(artifacts));
+                }
             } catch (e) {
                 console.error('Error saving data:', e);
-                alert('Could not save data. Storage might be full.');
+                if (e.name === 'QuotaExceededError') {
+                    alert('⚠️ Storage full! Try removing some custom icon images.');
+                } else {
+                    alert('Could not save data. Storage might be full.');
+                }
             }
         }
 
         // Dither image function
-        function ditherImage(img, targetWidth = 80, targetHeight = 80) {
+        function ditherImage(img, targetWidth = 64, targetHeight = 64) {
             const canvas = document.createElement('canvas');
             const ctx = canvas.getContext('2d');
             canvas.width = targetWidth;
@@ -1236,7 +1250,7 @@ Tenlo en cuenta para crear tus pequeñas notas pero no permitas que nada se pier
                     // Apply dither dynamically with current palette colors
                     const tempImg = new Image();
                     tempImg.onload = () => {
-                        const dithered = ditherImage(tempImg, 80, 80);
+                        const dithered = ditherImage(tempImg, 64, 64);
                         const ditheredImg = document.createElement('img');
                         ditheredImg.src = dithered;
                         ditheredImg.style.width = '100%';
@@ -1961,7 +1975,9 @@ Tenlo en cuenta para crear tus pequeñas notas pero no permitas que nada se pier
                 if (shouldDither) {
                     const img = new Image();
                     img.onload = () => {
-                        const targetWidth = window.innerWidth;
+                        // Limit wallpaper to max 1280px width for storage efficiency
+                        const maxWidth = 1280;
+                        const targetWidth = Math.min(window.innerWidth, maxWidth);
                         const aspectRatio = img.height / img.width;
                         const targetHeight = Math.round(targetWidth * aspectRatio);
                         
@@ -1969,14 +1985,49 @@ Tenlo en cuenta para crear tus pequeñas notas pero no permitas que nada se pier
                         desktop.style.backgroundImage = `url(${dithered})`;
                         desktop.style.backgroundSize = 'cover';
                         desktop.style.backgroundPosition = 'center';
-                        localStorage.setItem(WALLPAPER_KEY, dithered);
+                        
+                        // Compress wallpaper before saving
+                        if (typeof LZString !== 'undefined') {
+                            const compressed = LZString.compress(dithered);
+                            localStorage.setItem(WALLPAPER_KEY, compressed);
+                        } else {
+                            localStorage.setItem(WALLPAPER_KEY, dithered);
+                        }
                     };
                     img.src = currentWallpaperData;
                 } else {
-                    desktop.style.backgroundImage = `url(${currentWallpaperData})`;
-                    desktop.style.backgroundSize = 'cover';
-                    desktop.style.backgroundPosition = 'center';
-                    localStorage.setItem(WALLPAPER_KEY, currentWallpaperData);
+                    // Resize non-dithered wallpaper too
+                    const img = new Image();
+                    img.onload = () => {
+                        const maxWidth = 1280;
+                        const canvas = document.createElement('canvas');
+                        const ctx = canvas.getContext('2d');
+                        
+                        if (img.width > maxWidth) {
+                            const aspectRatio = img.height / img.width;
+                            canvas.width = maxWidth;
+                            canvas.height = Math.round(maxWidth * aspectRatio);
+                        } else {
+                            canvas.width = img.width;
+                            canvas.height = img.height;
+                        }
+                        
+                        ctx.drawImage(img, 0, 0, canvas.width, canvas.height);
+                        const resized = canvas.toDataURL('image/jpeg', 0.85); // Use JPEG with 85% quality
+                        
+                        desktop.style.backgroundImage = `url(${resized})`;
+                        desktop.style.backgroundSize = 'cover';
+                        desktop.style.backgroundPosition = 'center';
+                        
+                        // Compress wallpaper before saving
+                        if (typeof LZString !== 'undefined') {
+                            const compressed = LZString.compress(resized);
+                            localStorage.setItem(WALLPAPER_KEY, compressed);
+                        } else {
+                            localStorage.setItem(WALLPAPER_KEY, resized);
+                        }
+                    };
+                    img.src = currentWallpaperData;
                 }
             }
         }
@@ -2117,13 +2168,39 @@ Tenlo en cuenta para crear tus pequeñas notas pero no permitas que nada se pier
                 if (currentImageData) {
                     const shouldDither = document.getElementById('ditherIconToggle').checked;
                     
-                    // Store original image and dither preference
-                    artifact.customImage = currentImageData;
-                    artifact.ditherApplied = shouldDither;
-                    
-                    currentImageData = null;
-                    saveData();
-                    refreshDesktop();
+                    // Optimize image before saving
+                    const img = new Image();
+                    img.onload = () => {
+                        const canvas = document.createElement('canvas');
+                        const ctx = canvas.getContext('2d');
+                        
+                        // Reduce to max 64x64 for storage efficiency
+                        const maxSize = 64;
+                        if (img.width > maxSize || img.height > maxSize) {
+                            if (img.width > img.height) {
+                                canvas.width = maxSize;
+                                canvas.height = Math.round((img.height / img.width) * maxSize);
+                            } else {
+                                canvas.height = maxSize;
+                                canvas.width = Math.round((img.width / img.height) * maxSize);
+                            }
+                        } else {
+                            canvas.width = img.width;
+                            canvas.height = img.height;
+                        }
+                        
+                        ctx.drawImage(img, 0, 0, canvas.width, canvas.height);
+                        const optimized = canvas.toDataURL('image/jpeg', 0.85); // JPEG 85% quality
+                        
+                        // Store optimized image and dither preference
+                        artifact.customImage = optimized;
+                        artifact.ditherApplied = shouldDither;
+                        
+                        currentImageData = null;
+                        saveData();
+                        refreshDesktop();
+                    };
+                    img.src = currentImageData;
                 } else {
                     saveData();
                     refreshDesktop();
