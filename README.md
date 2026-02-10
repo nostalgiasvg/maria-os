@@ -1,2 +1,2 @@
 # maria-os
-A vibe coder operation system
+A vibe coded OS
