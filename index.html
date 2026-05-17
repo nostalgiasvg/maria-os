@@ -4,7 +4,7 @@
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <meta name="robots" content="noindex, nofollow">
-    <title>✦mariaOS✦</title>
+    <title>mariaOS</title>
     <link rel="icon" type="image/svg+xml" href="data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 32 32'%3E%3Crect width='32' height='32' fill='%231a1a1a'/%3E%3Cg fill='%23fff'%3E%3Crect x='2' y='4' width='2' height='2'/%3E%3Crect x='6' y='4' width='2' height='2'/%3E%3Crect x='10' y='4' width='2' height='2'/%3E%3Crect x='14' y='4' width='2' height='2'/%3E%3Crect x='18' y='4' width='2' height='2'/%3E%3Crect x='22' y='4' width='2' height='2'/%3E%3Crect x='26' y='4' width='2' height='2'/%3E%3Crect x='4' y='6' width='2' height='2'/%3E%3Crect x='8' y='6' width='2' height='2'/%3E%3Crect x='12' y='6' width='2' height='2'/%3E%3Crect x='16' y='6' width='2' height='2'/%3E%3Crect x='20' y='6' width='2' height='2'/%3E%3Crect x='24' y='6' width='2' height='2'/%3E%3Crect x='28' y='6' width='2' height='2'/%3E%3C/g%3E%3C/svg%3E">
     <!--
  _   _           _        _       _         ______     ______ 
@@ -1219,77 +1219,105 @@
     // =============================================
     // WALLPAPER + PALETTES
     // =============================================
+    // ─── DITHER CENTRAL — Floyd-Steinberg correcto ───────────────────────────
+    // Misma lógica que el dither de iconos pero con paleta configurable.
+    // Para paletas de 2 colores: convierte a luminancia y mapea al color más cercano.
+    // Para 'color': Floyd-Steinberg por canal manteniendo el color original.
+
+    function floydSteinberg2(ctx, W, H, darkRGB, lightRGB) {
+        // Luminancia de los dos colores de la paleta (para calcular error correcto)
+        const lumDark  = darkRGB.r  * 0.299 + darkRGB.g  * 0.587 + darkRGB.b  * 0.114;
+        const lumLight = lightRGB.r * 0.299 + lightRGB.g * 0.587 + lightRGB.b * 0.114;
+        const threshold = (lumDark + lumLight) / 2;
+
+        const imgData = ctx.getImageData(0, 0, W, H);
+        const d = imgData.data;
+        // Buffer float para acumular errores sin clampear
+        const buf = new Float32Array(W * H);
+        for (let i = 0; i < W * H; i++) {
+            buf[i] = d[i*4] * 0.299 + d[i*4+1] * 0.587 + d[i*4+2] * 0.114;
+        }
+
+        for (let y = 0; y < H; y++) {
+            for (let x = 0; x < W; x++) {
+                const idx = y * W + x;
+                const gray = buf[idx];
+                const useLight = gray > threshold;
+                const col = useLight ? lightRGB : darkRGB;
+                const chosenLum = useLight ? lumLight : lumDark;
+                const err = gray - chosenLum;
+
+                const pi = idx * 4;
+                d[pi]   = col.r;
+                d[pi+1] = col.g;
+                d[pi+2] = col.b;
+
+                // Difundir error a vecinos
+                if (x + 1 < W)              buf[idx + 1]         += err * 7/16;
+                if (y + 1 < H) {
+                    if (x > 0)              buf[idx + W - 1]     += err * 3/16;
+                                            buf[idx + W]         += err * 5/16;
+                    if (x + 1 < W)          buf[idx + W + 1]     += err * 1/16;
+                }
+            }
+        }
+        ctx.putImageData(imgData, 0, 0);
+    }
+
+    function floydSteinbergColor(ctx, W, H) {
+        // Floyd-Steinberg por canal — mantiene color original, cuantiza a 4 niveles
+        const levels = 4;
+        const step = 255 / (levels - 1);
+        const imgData = ctx.getImageData(0, 0, W, H);
+        const d = imgData.data;
+        const buf = new Float32Array(W * H * 3);
+        for (let i = 0; i < W * H; i++) {
+            buf[i*3]   = d[i*4];
+            buf[i*3+1] = d[i*4+1];
+            buf[i*3+2] = d[i*4+2];
+        }
+
+        for (let y = 0; y < H; y++) {
+            for (let x = 0; x < W; x++) {
+                const idx = y * W + x;
+                for (let c = 0; c < 3; c++) {
+                    const old = buf[idx*3+c];
+                    const newVal = Math.round(old / step) * step;
+                    const err = old - newVal;
+                    d[idx*4+c] = Math.max(0, Math.min(255, newVal));
+                    if (x + 1 < W)     buf[(idx+1)*3+c]       += err * 7/16;
+                    if (y + 1 < H) {
+                        if (x > 0)     buf[(idx+W-1)*3+c]     += err * 3/16;
+                                       buf[(idx+W)*3+c]       += err * 5/16;
+                        if (x + 1 < W) buf[(idx+W+1)*3+c]     += err * 1/16;
+                    }
+                }
+            }
+        }
+        ctx.putImageData(imgData, 0, 0);
+    }
+
+    function applyDitherToCanvas(srcImg, W, H, paletteId) {
+        const canvas = document.createElement('canvas');
+        canvas.width = W; canvas.height = H;
+        const ctx = canvas.getContext('2d');
+        ctx.drawImage(srcImg, 0, 0, W, H);
+
+        if (paletteId === 'color') {
+            floydSteinbergColor(ctx, W, H);
+        } else {
+            const palette = PALETTES.find(p => p.id === paletteId);
+            floydSteinberg2(ctx, W, H, hexToRgb(palette.colors[0]), hexToRgb(palette.colors[1]));
+        }
+        return canvas;
+    }
+
     function ditherWithPalette(img, paletteId) {
         const maxWidth = 1280;
         const scale = Math.min(1, maxWidth / img.width);
         const W = Math.round(img.width * scale);
         const H = Math.round(img.height * scale);
-
-        const canvas = document.createElement('canvas');
-        canvas.width = W; canvas.height = H;
-        const ctx = canvas.getContext('2d');
-        ctx.drawImage(img, 0, 0, W, H);
-
-        if (paletteId === 'color') {
-            // Dither con colores reales — Floyd-Steinberg reduciendo a 16 colores cuantizados
-            return ditherColorReal(canvas, ctx, W, H);
-        }
-
-        const palette = PALETTES.find(p => p.id === paletteId);
-        const darkRGB  = hexToRgb(palette.colors[0]);
-        const lightRGB = hexToRgb(palette.colors[1]);
-
-        const imgData = ctx.getImageData(0, 0, W, H);
-        const d = imgData.data;
-
-        for (let y = 0; y < H; y++) {
-            for (let x = 0; x < W; x++) {
-                const i = (y * W + x) * 4;
-                const gray = d[i] * 0.299 + d[i+1] * 0.587 + d[i+2] * 0.114;
-                const useLight = gray > 128;
-                const col = useLight ? lightRGB : darkRGB;
-                const err = gray - (useLight ? 255 : 0);
-                d[i] = col.r; d[i+1] = col.g; d[i+2] = col.b;
-                const spread = [[x+1,y,7/16],[x-1,y+1,3/16],[x,y+1,5/16],[x+1,y+1,1/16]];
-                spread.forEach(([nx,ny,f]) => {
-                    if (nx>=0 && nx<W && ny>=0 && ny<H) {
-                        const ni = (ny*W+nx)*4;
-                        d[ni] += err*f; d[ni+1] += err*f; d[ni+2] += err*f;
-                    }
-                });
-            }
-        }
-        ctx.putImageData(imgData, 0, 0);
-        return canvas.toDataURL();
-    }
-
-    function ditherColorReal(canvas, ctx, W, H) {
-        // Floyd-Steinberg manteniendo color — cuantiza cada canal a 4 niveles
-        const imgData = ctx.getImageData(0, 0, W, H);
-        const d = imgData.data;
-        const levels = 4;
-        const step = 255 / (levels - 1);
-
-        for (let y = 0; y < H; y++) {
-            for (let x = 0; x < W; x++) {
-                const i = (y * W + x) * 4;
-                for (let c = 0; c < 3; c++) {
-                    const old = d[i+c];
-                    const newVal = Math.round(old / step) * step;
-                    const err = old - newVal;
-                    d[i+c] = Math.max(0, Math.min(255, newVal));
-                    const spread = [[x+1,y,7/16],[x-1,y+1,3/16],[x,y+1,5/16],[x+1,y+1,1/16]];
-                    spread.forEach(([nx,ny,f]) => {
-                        if (nx>=0 && nx<W && ny>=0 && ny<H) {
-                            const ni = (ny*W+nx)*4;
-                            d[ni+c] = Math.max(0, Math.min(255, d[ni+c] + err*f));
-                        }
-                    });
-                }
-            }
-        }
-        ctx.putImageData(imgData, 0, 0);
-        return canvas.toDataURL();
+        return applyDitherToCanvas(img, W, H, paletteId).toDataURL();
     }
 
     function openPaletteModal(img) {
@@ -1353,41 +1381,18 @@
 
     function updatePalettePreview(img) {
         const previewCanvas = document.getElementById('palettePreviewCanvas');
-        // Generar preview en tamaño reducido para rapidez
         const prevW = Math.min(440, img.width);
         const scale = prevW / img.width;
         const prevH = Math.round(img.height * scale);
-        previewCanvas.width = prevW;
+        previewCanvas.width  = prevW;
         previewCanvas.height = prevH;
+        previewCanvas.style.width  = '100%';
+        previewCanvas.style.height = 'auto';
+
+        // Usar applyDitherToCanvas — mismo Floyd-Steinberg correcto
+        const dithered = applyDitherToCanvas(img, prevW, prevH, selectedPaletteId);
         const ctx = previewCanvas.getContext('2d');
-        ctx.drawImage(img, 0, 0, prevW, prevH);
-
-        const tmpCanvas = document.createElement('canvas');
-        tmpCanvas.width = prevW; tmpCanvas.height = prevH;
-        const tmpCtx = tmpCanvas.getContext('2d');
-        tmpCtx.drawImage(img, 0, 0, prevW, prevH);
-
-        if (selectedPaletteId === 'color') {
-            ditherColorReal(tmpCanvas, tmpCtx, prevW, prevH);
-        } else {
-            const palette = PALETTES.find(p => p.id === selectedPaletteId);
-            const darkRGB  = hexToRgb(palette.colors[0]);
-            const lightRGB = hexToRgb(palette.colors[1]);
-            const imgData = tmpCtx.getImageData(0, 0, prevW, prevH);
-            const d = imgData.data;
-            for (let y = 0; y < prevH; y++) {
-                for (let x = 0; x < prevW; x++) {
-                    const i = (y * prevW + x) * 4;
-                    const gray = d[i]*0.299 + d[i+1]*0.587 + d[i+2]*0.114;
-                    const useLight = gray > 128;
-                    const col = useLight ? lightRGB : darkRGB;
-                    d[i] = col.r; d[i+1] = col.g; d[i+2] = col.b;
-                }
-            }
-            tmpCtx.putImageData(imgData, 0, 0);
-        }
-
-        ctx.drawImage(tmpCanvas, 0, 0);
+        ctx.drawImage(dithered, 0, 0);
     }
 
     document.getElementById('paletteCancelBtn').addEventListener('click', () => {
