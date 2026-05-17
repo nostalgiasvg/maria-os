@@ -1491,14 +1491,19 @@
     async function loadThemes() {
         try {
             const data = await notionQuery(DB_THEMES);
-            themesData = data.results
-                .filter(p => !getProp(p, 'Activo', 'checkbox') === false || true) // mostrar todos
+
+            const themesBase = data.results
                 .map(p => ({
                     id:     p.id,
                     nombre: getProp(p, 'Nombre', 'title'),
-                    css:    getProp(p, 'CSS', 'rich_text'),
                 }))
                 .filter(t => t.nombre);
+
+            // Leer CSS desde bloque /code de cada página, igual que las apps
+            themesData = await Promise.all(themesBase.map(async t => ({
+                ...t,
+                css: await getPageCode(t.id)
+            })));
 
             // Aplicar theme guardado
             const savedId = localStorage.getItem(LS_THEME);
