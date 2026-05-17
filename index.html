@@ -853,7 +853,7 @@
 
         // Cargar código HTML de la app en un iframe con srcdoc
         const iframe = document.createElement('iframe');
-        iframe.sandbox = 'allow-scripts allow-forms allow-modals allow-popups allow-downloads';
+        iframe.sandbox = 'allow-scripts allow-same-origin allow-forms allow-modals allow-popups allow-downloads';
 
         if (app.codigo) {
             const isBase64 = /^[A-Za-z0-9+\/]+=*$/.test(app.codigo.trim()) && !app.codigo.includes("<");
