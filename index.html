@@ -609,6 +609,30 @@
         return res.json();
     }
 
+    async function notionPageBlocks(pageId) {
+        const res = await fetch(`${WORKER_URL}/blocks/${pageId}/children`, {
+            method: 'GET',
+            headers: { 'Content-Type': 'application/json' }
+        });
+        if (!res.ok) throw new Error(`Error ${res.status}`);
+        return res.json();
+    }
+
+    async function getPageCode(pageId) {
+        try {
+            const data = await notionPageBlocks(pageId);
+            // Buscar bloques de tipo 'code' y concatenar su contenido
+            const codeBlocks = data.results.filter(b => b.type === 'code');
+            if (codeBlocks.length === 0) return null;
+            return codeBlocks
+                .map(b => b.code?.rich_text?.map(t => t.plain_text).join('') || '')
+                .join('\n');
+        } catch(e) {
+            console.warn('No se pudo leer el código de la página:', e);
+            return null;
+        }
+    }
+
     function getProp(page, name, type) {
         const prop = page.properties[name];
         if (!prop) return null;
@@ -826,7 +850,12 @@
         iframe.sandbox = 'allow-scripts allow-forms allow-modals allow-popups';
 
         if (app.codigo) {
-            iframe.srcdoc = app.codigo;
+            const isBase64 = /^[A-Za-z0-9+\/]+=*$/.test(app.codigo.trim()) && !app.codigo.includes("<");
+            try {
+                iframe.srcdoc = isBase64 ? atob(app.codigo.trim()) : app.codigo;
+            } catch(e) {
+                iframe.srcdoc = app.codigo;
+            }
         } else {
             iframe.srcdoc = `<p style="font-family:monospace;padding:20px;color:#666">Sin contenido</p>`;
         }
@@ -1087,16 +1116,21 @@
         try {
             const data = await notionQuery(DB_APPS);
 
-            const apps = data.results
+            const appsBase = data.results
                 .filter(p => getProp(p, 'Activa', 'checkbox'))
                 .map(p => ({
                     id:     p.id,
                     nombre: getProp(p, 'Nombre', 'title'),
                     icono:  getProp(p, 'Icono', 'rich_text'),
-                    codigo: getProp(p, 'Código', 'rich_text'),
                     desc:   getProp(p, 'Descripción', 'rich_text'),
                 }))
                 .filter(a => a.nombre);
+
+            // Cargar el código de cada app desde su página
+            const apps = await Promise.all(appsBase.map(async app => ({
+                ...app,
+                codigo: await getPageCode(app.id)
+            })));
 
             loading.style.display = 'none';
 
