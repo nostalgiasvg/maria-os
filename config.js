@@ -3,7 +3,7 @@
 // Sustituye los valores entre comillas
 // =============================================
 
-const WORKER_URL = 'URL_WORKER'; // https://maria-os.tusubdominio.workers.dev
-const DB_APPS    = 'ID_BBDD_1';  // ID de la base de datos Apps
-const DB_BLOG    = 'ID_BBDD_2';  // ID de la base de datos Blog Posts
-const DB_THEMES  = 'ID_BBDD_3';  // ID de la base de datos Themes
+const WORKER_URL = 'https://maria-os.nostalgiasvg.workers.dev';
+const DB_APPS    = '361bacec543e8087a46fc14c98f33193';
+const DB_BLOG    = '361bacec543e8015bfc1dbbb2ae24682';
+const DB_THEMES  = '361bacec543e809c87a9c00e38b3a68e';
