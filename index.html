@@ -599,6 +599,12 @@
         .palette-modal-buttons {
             display: flex;
             gap: 8px;
+            flex-wrap: wrap;
+        }
+
+        .palette-modal-buttons .palette-modal-btn {
+            flex: 1;
+            min-width: 100px;
         }
 
         .palette-modal-btn {
@@ -706,6 +712,7 @@
             <canvas id="palettePreviewCanvas" class="palette-preview-img"></canvas>
             <div class="palette-options" id="paletteOptions"></div>
             <div class="palette-modal-buttons">
+                <button class="palette-modal-btn" id="paletteChangeImgBtn">Cambiar imagen</button>
                 <button class="palette-modal-btn" id="paletteCancelBtn">Cancelar</button>
                 <button class="palette-modal-btn primary" id="paletteApplyBtn">Aplicar</button>
             </div>
@@ -723,9 +730,10 @@
     // =============================================
     // LOCALSTORAGE KEYS
     // =============================================
-    const LS_THEME     = 'maria-os-theme';
-    const LS_KAOMOJI   = 'maria-os-kaomoji';
-    const LS_WALLPAPER = 'maria-os-wallpaper';
+    const LS_THEME        = 'maria-os-theme';
+    const LS_KAOMOJI      = 'maria-os-kaomoji';
+    const LS_WALLPAPER    = 'maria-os-wallpaper';
+    const LS_WALLPAPER_SRC = 'maria-os-wallpaper-src'; // imagen original sin dither
 
     // =============================================
     // KAOMOJI
@@ -752,12 +760,14 @@
     let resizeStart  = {};
 
     // Wallpaper palette state
+    // Paletas: array de colores ordenados de oscuro a claro
+    // Mínimo 3 colores con suficiente separación de luminancia para que el dither genere profundidad
     const PALETTES = [
-        { id: 'bw',     name: 'Clásico',  colors: ['#1a1a1a', '#ffffff'] },
-        { id: 'bloom',  name: 'Bloom',    colors: ['#e8c4cc', '#f5e8f0'] },
-        { id: 'cielo',  name: 'Cielo',    colors: ['#7ec8d8', '#c8e8d0'] },
-        { id: 'niebla', name: 'Niebla',   colors: ['#d8c8d8', '#f5f0f5'] },
-        { id: 'llama',  name: 'Llama',    colors: ['#2a4a8a', '#e87840'] },
+        { id: 'bw',     name: 'Clásico',  colors: ['#0a0a0a', '#888888', '#ffffff'] },
+        { id: 'bloom',  name: 'Bloom',    colors: ['#3a1a2a', '#c6728a', '#f5dde8'] },
+        { id: 'cielo',  name: 'Cielo',    colors: ['#0a2a3a', '#4a9ab0', '#d8f0f0'] },
+        { id: 'niebla', name: 'Niebla',   colors: ['#1a1a2a', '#8878a0', '#f0ecf5'] },
+        { id: 'llama',  name: 'Llama',    colors: ['#0a0a2a', '#c84820', '#f5d840'] },
         { id: 'color',  name: 'Color',    colors: null },
     ];
     let selectedPaletteId = 'bw';
@@ -1186,7 +1196,19 @@
     // Escritorio — cambiar fondo
     document.getElementById('ctxWallpaper').addEventListener('click', () => {
         hideAllMenus();
-        document.getElementById('wallpaperInput').click();
+        const savedSrc = localStorage.getItem(LS_WALLPAPER_SRC);
+        if (savedSrc) {
+            // Ya hay wallpaper — abrir modal con imagen actual
+            const img = new Image();
+            img.onload = () => {
+                pendingWallpaperImg = img;
+                openPaletteModal(img);
+            };
+            img.src = savedSrc;
+        } else {
+            // No hay wallpaper — pedir imagen
+            document.getElementById('wallpaperInput').click();
+        }
     });
 
     // Escritorio — quitar fondo
@@ -1197,9 +1219,11 @@
         desktop.style.backgroundSize = '';
         desktop.style.backgroundPosition = '';
         localStorage.removeItem(LS_WALLPAPER);
+        localStorage.removeItem(LS_WALLPAPER_SRC);
+        localStorage.removeItem(LS_WALLPAPER + '-palette');
     });
 
-    // Wallpaper input change — abre modal de paletas
+    // Wallpaper input change — guarda src y abre modal
     document.getElementById('wallpaperInput').addEventListener('change', (e) => {
         const file = e.target.files[0];
         if (!file) return;
@@ -1207,8 +1231,23 @@
         reader.onload = (ev) => {
             const img = new Image();
             img.onload = () => {
-                pendingWallpaperImg = img;
-                openPaletteModal(img);
+                // Comprimir src antes de guardar para no saturar localStorage
+                const srcCanvas = document.createElement('canvas');
+                const maxW = 1280;
+                const scale = Math.min(1, maxW / img.width);
+                srcCanvas.width  = Math.round(img.width * scale);
+                srcCanvas.height = Math.round(img.height * scale);
+                const srcCtx = srcCanvas.getContext('2d');
+                srcCtx.drawImage(img, 0, 0, srcCanvas.width, srcCanvas.height);
+                const compressed = srcCanvas.toDataURL('image/jpeg', 0.85);
+                try { localStorage.setItem(LS_WALLPAPER_SRC, compressed); } catch(e) {}
+
+                const srcImg = new Image();
+                srcImg.onload = () => {
+                    pendingWallpaperImg = srcImg;
+                    openPaletteModal(srcImg);
+                };
+                srcImg.src = compressed;
             };
             img.src = ev.target.result;
         };
@@ -1224,15 +1263,20 @@
     // Para paletas de 2 colores: convierte a luminancia y mapea al color más cercano.
     // Para 'color': Floyd-Steinberg por canal manteniendo el color original.
 
-    function floydSteinberg2(ctx, W, H, darkRGB, lightRGB) {
-        // Luminancia de los dos colores de la paleta (para calcular error correcto)
-        const lumDark  = darkRGB.r  * 0.299 + darkRGB.g  * 0.587 + darkRGB.b  * 0.114;
-        const lumLight = lightRGB.r * 0.299 + lightRGB.g * 0.587 + lightRGB.b * 0.114;
-        const threshold = (lumDark + lumLight) / 2;
+    function lum(rgb) {
+        return rgb.r * 0.299 + rgb.g * 0.587 + rgb.b * 0.114;
+    }
+
+    function floydSteinbergPalette(ctx, W, H, paletteColors) {
+        // Floyd-Steinberg con N colores ordenados de oscuro a claro
+        // Encuentra el color de paleta más cercano en luminancia para cada pixel
+        const palette = paletteColors.map(hexToRgb);
+        const palLums = palette.map(lum);
 
         const imgData = ctx.getImageData(0, 0, W, H);
         const d = imgData.data;
-        // Buffer float para acumular errores sin clampear
+
+        // Buffer float de luminancia para acumular errores
         const buf = new Float32Array(W * H);
         for (let i = 0; i < W * H; i++) {
             buf[i] = d[i*4] * 0.299 + d[i*4+1] * 0.587 + d[i*4+2] * 0.114;
@@ -1241,23 +1285,30 @@
         for (let y = 0; y < H; y++) {
             for (let x = 0; x < W; x++) {
                 const idx = y * W + x;
-                const gray = buf[idx];
-                const useLight = gray > threshold;
-                const col = useLight ? lightRGB : darkRGB;
-                const chosenLum = useLight ? lumLight : lumDark;
-                const err = gray - chosenLum;
+                const gray = Math.max(0, Math.min(255, buf[idx]));
+
+                // Encontrar el color de paleta más cercano por luminancia
+                let bestIdx = 0;
+                let bestDist = Math.abs(gray - palLums[0]);
+                for (let k = 1; k < palette.length; k++) {
+                    const dist = Math.abs(gray - palLums[k]);
+                    if (dist < bestDist) { bestDist = dist; bestIdx = k; }
+                }
+
+                const col = palette[bestIdx];
+                const err = gray - palLums[bestIdx];
 
                 const pi = idx * 4;
                 d[pi]   = col.r;
                 d[pi+1] = col.g;
                 d[pi+2] = col.b;
 
-                // Difundir error a vecinos
-                if (x + 1 < W)              buf[idx + 1]         += err * 7/16;
+                // Difundir error Floyd-Steinberg
+                if (x + 1 < W)         buf[idx + 1]     += err * 7/16;
                 if (y + 1 < H) {
-                    if (x > 0)              buf[idx + W - 1]     += err * 3/16;
-                                            buf[idx + W]         += err * 5/16;
-                    if (x + 1 < W)          buf[idx + W + 1]     += err * 1/16;
+                    if (x > 0)         buf[idx + W - 1] += err * 3/16;
+                                       buf[idx + W]     += err * 5/16;
+                    if (x + 1 < W)     buf[idx + W + 1] += err * 1/16;
                 }
             }
         }
@@ -1307,7 +1358,7 @@
             floydSteinbergColor(ctx, W, H);
         } else {
             const palette = PALETTES.find(p => p.id === paletteId);
-            floydSteinberg2(ctx, W, H, hexToRgb(palette.colors[0]), hexToRgb(palette.colors[1]));
+            floydSteinbergPalette(ctx, W, H, palette.colors);
         }
         return canvas;
     }
@@ -1342,20 +1393,12 @@
 
             const swatch = document.createElement('div');
             swatch.className = 'palette-swatch';
-            if (p.colors) {
-                p.colors.forEach(c => {
-                    const s = document.createElement('span');
-                    s.style.background = c;
-                    swatch.appendChild(s);
-                });
-            } else {
-                // Color real — arcoíris
-                ['#e87070','#e8c070','#70e870','#70c8e8','#7070e8','#c870e8'].forEach(c => {
-                    const s = document.createElement('span');
-                    s.style.background = c;
-                    swatch.appendChild(s);
-                });
-            }
+            const swatchColors = p.colors || ['#e87070','#e8b040','#70d870','#40a8d8','#7060e8','#c060c8'];
+            swatchColors.forEach(c => {
+                const s = document.createElement('span');
+                s.style.background = c;
+                swatch.appendChild(s);
+            });
 
             const name = document.createElement('div');
             name.className = 'palette-option-name';
@@ -1394,6 +1437,10 @@
         const ctx = previewCanvas.getContext('2d');
         ctx.drawImage(dithered, 0, 0);
     }
+
+    document.getElementById('paletteChangeImgBtn').addEventListener('click', () => {
+        document.getElementById('wallpaperInput').click();
+    });
 
     document.getElementById('paletteCancelBtn').addEventListener('click', () => {
         document.getElementById('paletteModal').classList.remove('active');
