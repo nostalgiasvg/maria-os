@@ -4,7 +4,7 @@
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <meta name="robots" content="noindex, nofollow">
-    <title>MARÍA OS</title>
+    <title>mariaOS</title>
     <link rel="icon" type="image/svg+xml" href="data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 32 32'%3E%3Crect width='32' height='32' fill='%231a1a1a'/%3E%3Cg fill='%23fff'%3E%3Crect x='2' y='4' width='2' height='2'/%3E%3Crect x='6' y='4' width='2' height='2'/%3E%3Crect x='10' y='4' width='2' height='2'/%3E%3Crect x='14' y='4' width='2' height='2'/%3E%3Crect x='18' y='4' width='2' height='2'/%3E%3Crect x='22' y='4' width='2' height='2'/%3E%3Crect x='26' y='4' width='2' height='2'/%3E%3Crect x='4' y='6' width='2' height='2'/%3E%3Crect x='8' y='6' width='2' height='2'/%3E%3Crect x='12' y='6' width='2' height='2'/%3E%3Crect x='16' y='6' width='2' height='2'/%3E%3Crect x='20' y='6' width='2' height='2'/%3E%3Crect x='24' y='6' width='2' height='2'/%3E%3Crect x='28' y='6' width='2' height='2'/%3E%3C/g%3E%3C/svg%3E">
     <!--
  _   _           _        _       _         ______     ______ 
@@ -539,8 +539,13 @@
     <!-- Context menu — escritorio -->
     <div class="context-menu" id="desktopContextMenu">
         <div class="context-menu-item" id="ctxThemes">Themes</div>
+        <div class="context-menu-item" id="ctxWallpaper">Cambiar fondo</div>
+        <div class="context-menu-item" id="ctxResetWallpaper">Quitar fondo</div>
         <div class="context-menu-item" id="ctxReload">Recargar apps</div>
     </div>
+
+    <!-- Input oculto para wallpaper -->
+    <input type="file" id="wallpaperInput" accept="image/*" style="display:none">
 
     <!-- Modal — Themes -->
     <div class="modal" id="themesModal">
@@ -574,8 +579,9 @@
     // =============================================
     // LOCALSTORAGE KEYS
     // =============================================
-    const LS_THEME   = 'maria-os-theme';
-    const LS_KAOMOJI = 'maria-os-kaomoji';
+    const LS_THEME     = 'maria-os-theme';
+    const LS_KAOMOJI   = 'maria-os-kaomoji';
+    const LS_WALLPAPER = 'maria-os-wallpaper';
 
     // =============================================
     // KAOMOJI
@@ -847,7 +853,7 @@
 
         // Cargar código HTML de la app en un iframe con srcdoc
         const iframe = document.createElement('iframe');
-        iframe.sandbox = 'allow-scripts allow-forms allow-modals allow-popups';
+        iframe.sandbox = 'allow-scripts allow-forms allow-modals allow-popups allow-downloads';
 
         if (app.codigo) {
             const isBase64 = /^[A-Za-z0-9+\/]+=*$/.test(app.codigo.trim()) && !app.codigo.includes("<");
@@ -964,6 +970,67 @@
         hideAllMenus();
         loadApps();
     });
+
+    // Escritorio — cambiar fondo
+    document.getElementById('ctxWallpaper').addEventListener('click', () => {
+        hideAllMenus();
+        document.getElementById('wallpaperInput').click();
+    });
+
+    // Escritorio — quitar fondo
+    document.getElementById('ctxResetWallpaper').addEventListener('click', () => {
+        hideAllMenus();
+        const desktop = document.getElementById('desktop');
+        desktop.style.backgroundImage = '';
+        desktop.style.backgroundSize = '';
+        desktop.style.backgroundPosition = '';
+        localStorage.removeItem(LS_WALLPAPER);
+    });
+
+    // Wallpaper input change
+    document.getElementById('wallpaperInput').addEventListener('change', (e) => {
+        const file = e.target.files[0];
+        if (!file) return;
+        const reader = new FileReader();
+        reader.onload = (ev) => {
+            applyWallpaper(ev.target.result);
+        };
+        reader.readAsDataURL(file);
+        e.target.value = '';
+    });
+
+    // =============================================
+    // WALLPAPER
+    // =============================================
+    function applyWallpaper(dataUrl) {
+        const img = new Image();
+        img.onload = () => {
+            const maxWidth = 1280;
+            const scale = Math.min(1, maxWidth / img.width);
+            const W = Math.round(img.width * scale);
+            const H = Math.round(img.height * scale);
+            const dithered = ditherImage(img, W, H);
+            const desktop = document.getElementById('desktop');
+            desktop.style.backgroundImage = `url(${dithered})`;
+            desktop.style.backgroundSize = 'cover';
+            desktop.style.backgroundPosition = 'center';
+            try {
+                localStorage.setItem(LS_WALLPAPER, dithered);
+            } catch(e) {
+                console.warn('Wallpaper demasiado pesado para localStorage:', e);
+            }
+        };
+        img.src = dataUrl;
+    }
+
+    function loadWallpaper() {
+        const saved = localStorage.getItem(LS_WALLPAPER);
+        if (!saved) return;
+        const desktop = document.getElementById('desktop');
+        desktop.style.backgroundImage = `url(${saved})`;
+        desktop.style.backgroundSize = 'cover';
+        desktop.style.backgroundPosition = 'center';
+    }
 
     // =============================================
     // THEMES
@@ -1173,6 +1240,9 @@
         // Kaomoji guardado
         const savedK = localStorage.getItem(LS_KAOMOJI);
         if (savedK) document.getElementById('kaomojiBtn').textContent = savedK;
+
+        // Wallpaper guardado
+        loadWallpaper();
 
         updateClock();
         setInterval(updateClock, 1000);
