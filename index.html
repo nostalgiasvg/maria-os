@@ -4,7 +4,7 @@
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <meta name="robots" content="noindex, nofollow">
-    <title>MARÍA OS</title>
+    <title>✦mariaOS✦</title>
     <link rel="icon" type="image/svg+xml" href="data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 32 32'%3E%3Crect width='32' height='32' fill='%231a1a1a'/%3E%3Cg fill='%23fff'%3E%3Crect x='2' y='4' width='2' height='2'/%3E%3Crect x='6' y='4' width='2' height='2'/%3E%3Crect x='10' y='4' width='2' height='2'/%3E%3Crect x='14' y='4' width='2' height='2'/%3E%3Crect x='18' y='4' width='2' height='2'/%3E%3Crect x='22' y='4' width='2' height='2'/%3E%3Crect x='26' y='4' width='2' height='2'/%3E%3Crect x='4' y='6' width='2' height='2'/%3E%3Crect x='8' y='6' width='2' height='2'/%3E%3Crect x='12' y='6' width='2' height='2'/%3E%3Crect x='16' y='6' width='2' height='2'/%3E%3Crect x='20' y='6' width='2' height='2'/%3E%3Crect x='24' y='6' width='2' height='2'/%3E%3Crect x='28' y='6' width='2' height='2'/%3E%3C/g%3E%3C/svg%3E">
     <!--
  _   _           _        _       _         ______     ______ 
@@ -495,6 +495,132 @@
         /* =====================
            RESPONSIVE
         ===================== */
+        /* =====================
+           RESIZE HANDLES
+        ===================== */
+        .resize-handle {
+            position: absolute;
+            z-index: 10;
+        }
+        .resize-n  { top: 0; left: 6px; right: 6px; height: 6px; cursor: ns-resize; }
+        .resize-s  { bottom: 0; left: 6px; right: 6px; height: 6px; cursor: ns-resize; }
+        .resize-w  { left: 0; top: 6px; bottom: 6px; width: 6px; cursor: ew-resize; }
+        .resize-e  { right: 0; top: 6px; bottom: 6px; width: 6px; cursor: ew-resize; }
+        .resize-nw { top: 0; left: 0; width: 12px; height: 12px; cursor: nw-resize; }
+        .resize-ne { top: 0; right: 0; width: 12px; height: 12px; cursor: ne-resize; }
+        .resize-sw { bottom: 0; left: 0; width: 12px; height: 12px; cursor: sw-resize; }
+        .resize-se { bottom: 0; right: 0; width: 12px; height: 12px; cursor: se-resize; }
+
+        /* =====================
+           WALLPAPER PALETTE MODAL
+        ===================== */
+        .palette-modal-overlay {
+            display: none;
+            position: fixed;
+            inset: 0;
+            background: rgba(0,0,0,0.7);
+            z-index: 30000;
+            align-items: center;
+            justify-content: center;
+        }
+        .palette-modal-overlay.active { display: flex; }
+
+        .palette-modal {
+            background: var(--accent-primary);
+            border: 3px solid var(--border-color);
+            padding: 24px;
+            max-width: 480px;
+            width: 90%;
+        }
+
+        .palette-modal h2 {
+            color: var(--text-secondary);
+            font-size: 13px;
+            letter-spacing: 2px;
+            text-transform: uppercase;
+            margin-bottom: 8px;
+        }
+
+        .palette-modal p {
+            color: var(--text-secondary);
+            font-size: 10px;
+            letter-spacing: 1px;
+            text-transform: uppercase;
+            opacity: 0.5;
+            margin-bottom: 20px;
+        }
+
+        .palette-preview-img {
+            width: 100%;
+            height: 120px;
+            object-fit: cover;
+            margin-bottom: 16px;
+            display: block;
+        }
+
+        .palette-options {
+            display: grid;
+            grid-template-columns: repeat(3, 1fr);
+            gap: 8px;
+            margin-bottom: 20px;
+        }
+
+        .palette-option {
+            border: 2px solid var(--border-color);
+            padding: 10px 8px;
+            cursor: pointer;
+            text-align: center;
+            transition: all 0.15s;
+            background: var(--accent-primary);
+        }
+
+        .palette-option:hover { opacity: 0.8; }
+        .palette-option.selected { border-color: var(--text-secondary); border-width: 3px; }
+
+        .palette-swatch {
+            height: 24px;
+            display: flex;
+            gap: 2px;
+            margin-bottom: 6px;
+        }
+
+        .palette-swatch span {
+            flex: 1;
+            display: block;
+        }
+
+        .palette-option-name {
+            font-size: 9px;
+            letter-spacing: 1px;
+            text-transform: uppercase;
+            color: var(--text-secondary);
+        }
+
+        .palette-modal-buttons {
+            display: flex;
+            gap: 8px;
+        }
+
+        .palette-modal-btn {
+            flex: 1;
+            padding: 10px;
+            border: 2px solid var(--border-color);
+            background: var(--accent-primary);
+            color: var(--text-secondary);
+            font-family: 'Courier Prime', monospace;
+            font-size: 10px;
+            letter-spacing: 1px;
+            text-transform: uppercase;
+            cursor: pointer;
+            transition: all 0.15s;
+        }
+
+        .palette-modal-btn:hover,
+        .palette-modal-btn.primary {
+            background: var(--text-secondary);
+            color: var(--accent-primary);
+        }
+
         @media (max-width: 600px) {
             .window {
                 min-width: 90vw;
@@ -509,6 +635,10 @@
             .icon-image {
                 width: 60px;
                 height: 60px;
+            }
+
+            .palette-options {
+                grid-template-columns: repeat(2, 1fr);
             }
         }
     </style>
@@ -568,6 +698,20 @@
         </div>
     </div>
 
+    <!-- Modal — Paleta de wallpaper -->
+    <div class="palette-modal-overlay" id="paletteModal">
+        <div class="palette-modal">
+            <h2>Paleta de fondo</h2>
+            <p>Elige cómo aplicar el dither</p>
+            <canvas id="palettePreviewCanvas" class="palette-preview-img"></canvas>
+            <div class="palette-options" id="paletteOptions"></div>
+            <div class="palette-modal-buttons">
+                <button class="palette-modal-btn" id="paletteCancelBtn">Cancelar</button>
+                <button class="palette-modal-btn primary" id="paletteApplyBtn">Aplicar</button>
+            </div>
+        </div>
+    </div>
+
     <script src="config.js"></script>
     <script>
     // =============================================
@@ -601,6 +745,23 @@
     let dragOffset   = { x: 0, y: 0 };
     let activeIcon   = null;
     let themesData   = [];
+
+    // Resize state
+    let resizeWin    = null;
+    let resizeDir    = null;
+    let resizeStart  = {};
+
+    // Wallpaper palette state
+    const PALETTES = [
+        { id: 'bw',     name: 'Clásico',  colors: ['#1a1a1a', '#ffffff'] },
+        { id: 'bloom',  name: 'Bloom',    colors: ['#e8c4cc', '#f5e8f0'] },
+        { id: 'cielo',  name: 'Cielo',    colors: ['#7ec8d8', '#c8e8d0'] },
+        { id: 'niebla', name: 'Niebla',   colors: ['#d8c8d8', '#f5f0f5'] },
+        { id: 'llama',  name: 'Llama',    colors: ['#2a4a8a', '#e87840'] },
+        { id: 'color',  name: 'Color',    colors: null },
+    ];
+    let selectedPaletteId = 'bw';
+    let pendingWallpaperImg = null;
 
     // =============================================
     // NOTION API
@@ -884,6 +1045,27 @@
             win.style.zIndex = ++windowZ;
         });
 
+        // Resize handles
+        ['n','s','e','w','nw','ne','sw','se'].forEach(dir => {
+            const handle = document.createElement('div');
+            handle.className = `resize-handle resize-${dir}`;
+            handle.addEventListener('mousedown', (e) => {
+                if (win.classList.contains('maximized')) return;
+                e.preventDefault();
+                e.stopPropagation();
+                resizeWin = win;
+                resizeDir = dir;
+                const rect = win.getBoundingClientRect();
+                resizeStart = {
+                    mouseX: e.clientX, mouseY: e.clientY,
+                    left: rect.left, top: rect.top,
+                    width: rect.width, height: rect.height
+                };
+                win.style.zIndex = ++windowZ;
+            });
+            win.appendChild(handle);
+        });
+
         document.getElementById('desktop').appendChild(win);
         windows.push({ el: win, appId: app.id, app });
         updateTaskbar();
@@ -914,12 +1096,41 @@
     // DRAG
     // =============================================
     document.addEventListener('mousemove', (e) => {
-        if (!dragWin) return;
-        dragWin.style.left = (e.clientX - dragOffset.x) + 'px';
-        dragWin.style.top  = (e.clientY - dragOffset.y) + 'px';
+        if (dragWin) {
+            dragWin.style.left = (e.clientX - dragOffset.x) + 'px';
+            dragWin.style.top  = (e.clientY - dragOffset.y) + 'px';
+        }
+        if (resizeWin && resizeDir) {
+            const dx = e.clientX - resizeStart.mouseX;
+            const dy = e.clientY - resizeStart.mouseY;
+            const minW = 320, minH = 200;
+            let { left, top, width, height } = resizeStart;
+
+            if (resizeDir.includes('e')) width  = Math.max(minW, width + dx);
+            if (resizeDir.includes('s')) height = Math.max(minH, height + dy);
+            if (resizeDir.includes('w')) {
+                const newW = Math.max(minW, width - dx);
+                left = left + (width - newW);
+                width = newW;
+            }
+            if (resizeDir.includes('n')) {
+                const newH = Math.max(minH, height - dy);
+                top = top + (height - newH);
+                height = newH;
+            }
+
+            resizeWin.style.left   = left + 'px';
+            resizeWin.style.top    = top + 'px';
+            resizeWin.style.width  = width + 'px';
+            resizeWin.style.height = height + 'px';
+        }
     });
 
-    document.addEventListener('mouseup', () => { dragWin = null; });
+    document.addEventListener('mouseup', () => {
+        dragWin = null;
+        resizeWin = null;
+        resizeDir = null;
+    });
 
     // =============================================
     // CONTEXT MENUS
@@ -988,41 +1199,218 @@
         localStorage.removeItem(LS_WALLPAPER);
     });
 
-    // Wallpaper input change
+    // Wallpaper input change — abre modal de paletas
     document.getElementById('wallpaperInput').addEventListener('change', (e) => {
         const file = e.target.files[0];
         if (!file) return;
         const reader = new FileReader();
         reader.onload = (ev) => {
-            applyWallpaper(ev.target.result);
+            const img = new Image();
+            img.onload = () => {
+                pendingWallpaperImg = img;
+                openPaletteModal(img);
+            };
+            img.src = ev.target.result;
         };
         reader.readAsDataURL(file);
         e.target.value = '';
     });
 
     // =============================================
-    // WALLPAPER
+    // WALLPAPER + PALETTES
     // =============================================
-    function applyWallpaper(dataUrl) {
-        const img = new Image();
-        img.onload = () => {
-            const maxWidth = 1280;
-            const scale = Math.min(1, maxWidth / img.width);
-            const W = Math.round(img.width * scale);
-            const H = Math.round(img.height * scale);
-            const dithered = ditherImage(img, W, H);
-            const desktop = document.getElementById('desktop');
-            desktop.style.backgroundImage = `url(${dithered})`;
-            desktop.style.backgroundSize = 'cover';
-            desktop.style.backgroundPosition = 'center';
-            try {
-                localStorage.setItem(LS_WALLPAPER, dithered);
-            } catch(e) {
-                console.warn('Wallpaper demasiado pesado para localStorage:', e);
+    function ditherWithPalette(img, paletteId) {
+        const maxWidth = 1280;
+        const scale = Math.min(1, maxWidth / img.width);
+        const W = Math.round(img.width * scale);
+        const H = Math.round(img.height * scale);
+
+        const canvas = document.createElement('canvas');
+        canvas.width = W; canvas.height = H;
+        const ctx = canvas.getContext('2d');
+        ctx.drawImage(img, 0, 0, W, H);
+
+        if (paletteId === 'color') {
+            // Dither con colores reales — Floyd-Steinberg reduciendo a 16 colores cuantizados
+            return ditherColorReal(canvas, ctx, W, H);
+        }
+
+        const palette = PALETTES.find(p => p.id === paletteId);
+        const darkRGB  = hexToRgb(palette.colors[0]);
+        const lightRGB = hexToRgb(palette.colors[1]);
+
+        const imgData = ctx.getImageData(0, 0, W, H);
+        const d = imgData.data;
+
+        for (let y = 0; y < H; y++) {
+            for (let x = 0; x < W; x++) {
+                const i = (y * W + x) * 4;
+                const gray = d[i] * 0.299 + d[i+1] * 0.587 + d[i+2] * 0.114;
+                const useLight = gray > 128;
+                const col = useLight ? lightRGB : darkRGB;
+                const err = gray - (useLight ? 255 : 0);
+                d[i] = col.r; d[i+1] = col.g; d[i+2] = col.b;
+                const spread = [[x+1,y,7/16],[x-1,y+1,3/16],[x,y+1,5/16],[x+1,y+1,1/16]];
+                spread.forEach(([nx,ny,f]) => {
+                    if (nx>=0 && nx<W && ny>=0 && ny<H) {
+                        const ni = (ny*W+nx)*4;
+                        d[ni] += err*f; d[ni+1] += err*f; d[ni+2] += err*f;
+                    }
+                });
             }
-        };
-        img.src = dataUrl;
+        }
+        ctx.putImageData(imgData, 0, 0);
+        return canvas.toDataURL();
     }
+
+    function ditherColorReal(canvas, ctx, W, H) {
+        // Floyd-Steinberg manteniendo color — cuantiza cada canal a 4 niveles
+        const imgData = ctx.getImageData(0, 0, W, H);
+        const d = imgData.data;
+        const levels = 4;
+        const step = 255 / (levels - 1);
+
+        for (let y = 0; y < H; y++) {
+            for (let x = 0; x < W; x++) {
+                const i = (y * W + x) * 4;
+                for (let c = 0; c < 3; c++) {
+                    const old = d[i+c];
+                    const newVal = Math.round(old / step) * step;
+                    const err = old - newVal;
+                    d[i+c] = Math.max(0, Math.min(255, newVal));
+                    const spread = [[x+1,y,7/16],[x-1,y+1,3/16],[x,y+1,5/16],[x+1,y+1,1/16]];
+                    spread.forEach(([nx,ny,f]) => {
+                        if (nx>=0 && nx<W && ny>=0 && ny<H) {
+                            const ni = (ny*W+nx)*4;
+                            d[ni+c] = Math.max(0, Math.min(255, d[ni+c] + err*f));
+                        }
+                    });
+                }
+            }
+        }
+        ctx.putImageData(imgData, 0, 0);
+        return canvas.toDataURL();
+    }
+
+    function openPaletteModal(img) {
+        // Preview
+        const previewCanvas = document.getElementById('palettePreviewCanvas');
+        const maxPrevW = 440;
+        const scale = Math.min(1, maxPrevW / img.width);
+        previewCanvas.width  = Math.round(img.width * scale);
+        previewCanvas.height = Math.round(img.height * scale);
+        previewCanvas.style.width  = '100%';
+        previewCanvas.style.height = 'auto';
+        const pCtx = previewCanvas.getContext('2d');
+        pCtx.drawImage(img, 0, 0, previewCanvas.width, previewCanvas.height);
+
+        // Render palette options
+        const container = document.getElementById('paletteOptions');
+        container.innerHTML = '';
+        PALETTES.forEach(p => {
+            const opt = document.createElement('div');
+            opt.className = 'palette-option' + (p.id === selectedPaletteId ? ' selected' : '');
+            opt.dataset.id = p.id;
+
+            const swatch = document.createElement('div');
+            swatch.className = 'palette-swatch';
+            if (p.colors) {
+                p.colors.forEach(c => {
+                    const s = document.createElement('span');
+                    s.style.background = c;
+                    swatch.appendChild(s);
+                });
+            } else {
+                // Color real — arcoíris
+                ['#e87070','#e8c070','#70e870','#70c8e8','#7070e8','#c870e8'].forEach(c => {
+                    const s = document.createElement('span');
+                    s.style.background = c;
+                    swatch.appendChild(s);
+                });
+            }
+
+            const name = document.createElement('div');
+            name.className = 'palette-option-name';
+            name.textContent = p.name;
+
+            opt.appendChild(swatch);
+            opt.appendChild(name);
+
+            opt.addEventListener('click', () => {
+                selectedPaletteId = p.id;
+                container.querySelectorAll('.palette-option').forEach(o => o.classList.remove('selected'));
+                opt.classList.add('selected');
+                // Preview en tiempo real
+                updatePalettePreview(img);
+            });
+
+            container.appendChild(opt);
+        });
+
+        updatePalettePreview(img);
+        document.getElementById('paletteModal').classList.add('active');
+    }
+
+    function updatePalettePreview(img) {
+        const previewCanvas = document.getElementById('palettePreviewCanvas');
+        // Generar preview en tamaño reducido para rapidez
+        const prevW = Math.min(440, img.width);
+        const scale = prevW / img.width;
+        const prevH = Math.round(img.height * scale);
+        previewCanvas.width = prevW;
+        previewCanvas.height = prevH;
+        const ctx = previewCanvas.getContext('2d');
+        ctx.drawImage(img, 0, 0, prevW, prevH);
+
+        const tmpCanvas = document.createElement('canvas');
+        tmpCanvas.width = prevW; tmpCanvas.height = prevH;
+        const tmpCtx = tmpCanvas.getContext('2d');
+        tmpCtx.drawImage(img, 0, 0, prevW, prevH);
+
+        if (selectedPaletteId === 'color') {
+            ditherColorReal(tmpCanvas, tmpCtx, prevW, prevH);
+        } else {
+            const palette = PALETTES.find(p => p.id === selectedPaletteId);
+            const darkRGB  = hexToRgb(palette.colors[0]);
+            const lightRGB = hexToRgb(palette.colors[1]);
+            const imgData = tmpCtx.getImageData(0, 0, prevW, prevH);
+            const d = imgData.data;
+            for (let y = 0; y < prevH; y++) {
+                for (let x = 0; x < prevW; x++) {
+                    const i = (y * prevW + x) * 4;
+                    const gray = d[i]*0.299 + d[i+1]*0.587 + d[i+2]*0.114;
+                    const useLight = gray > 128;
+                    const col = useLight ? lightRGB : darkRGB;
+                    d[i] = col.r; d[i+1] = col.g; d[i+2] = col.b;
+                }
+            }
+            tmpCtx.putImageData(imgData, 0, 0);
+        }
+
+        ctx.drawImage(tmpCanvas, 0, 0);
+    }
+
+    document.getElementById('paletteCancelBtn').addEventListener('click', () => {
+        document.getElementById('paletteModal').classList.remove('active');
+        pendingWallpaperImg = null;
+    });
+
+    document.getElementById('paletteApplyBtn').addEventListener('click', () => {
+        if (!pendingWallpaperImg) return;
+        const result = ditherWithPalette(pendingWallpaperImg, selectedPaletteId);
+        const desktop = document.getElementById('desktop');
+        desktop.style.backgroundImage = `url(${result})`;
+        desktop.style.backgroundSize = 'cover';
+        desktop.style.backgroundPosition = 'center';
+        try {
+            localStorage.setItem(LS_WALLPAPER, result);
+            localStorage.setItem(LS_WALLPAPER + '-palette', selectedPaletteId);
+        } catch(e) {
+            console.warn('Wallpaper demasiado pesado para localStorage:', e);
+        }
+        document.getElementById('paletteModal').classList.remove('active');
+        pendingWallpaperImg = null;
+    });
 
     function loadWallpaper() {
         const saved = localStorage.getItem(LS_WALLPAPER);
@@ -1031,6 +1419,8 @@
         desktop.style.backgroundImage = `url(${saved})`;
         desktop.style.backgroundSize = 'cover';
         desktop.style.backgroundPosition = 'center';
+        const savedPalette = localStorage.getItem(LS_WALLPAPER + '-palette');
+        if (savedPalette) selectedPaletteId = savedPalette;
     }
 
     // =============================================
@@ -1192,7 +1582,8 @@
                     icono:  getProp(p, 'Icono', 'rich_text'),
                     desc:   getProp(p, 'Descripción', 'rich_text'),
                 }))
-                .filter(a => a.nombre);
+                .filter(a => a.nombre)
+                .reverse();
 
             // Cargar el código de cada app desde su página
             const apps = await Promise.all(appsBase.map(async app => ({
