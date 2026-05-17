@@ -265,6 +265,31 @@
             height: calc(100vh - 30px) !important;
         }
 
+        .window.maximized .window-title-bar {
+            display: none;
+        }
+
+        .restore-btn {
+            display: none;
+            position: fixed;
+            top: 32px;
+            right: 8px;
+            z-index: 15000;
+            background: var(--bg-primary);
+            color: var(--text-primary);
+            border: 1px solid var(--accent-primary);
+            font-family: 'Courier Prime', monospace;
+            font-size: 10px;
+            letter-spacing: 1px;
+            padding: 4px 10px;
+            cursor: pointer;
+            opacity: 0.7;
+            transition: opacity 0.15s;
+        }
+
+        .restore-btn:hover { opacity: 1; }
+        .restore-btn.visible { display: block; }
+
         .window.minimized { display: none !important; }
 
         .window-title-bar {
@@ -660,6 +685,7 @@
     </div>
 
     <!-- Desktop -->
+    <button class="restore-btn" id="restoreBtn">□ restaurar</button>
     <div class="desktop" id="desktop">
         <div class="loading-screen" id="loadingScreen">
             <div class="loading-text loading-dots">Cargando María OS</div>
@@ -1008,6 +1034,16 @@
         }));
         controls.appendChild(mkBtn('maximize', () => {
             win.classList.toggle('maximized');
+            const restoreBtn = document.getElementById('restoreBtn');
+            if (win.classList.contains('maximized')) {
+                restoreBtn.classList.add('visible');
+                restoreBtn.onclick = () => {
+                    win.classList.remove('maximized');
+                    restoreBtn.classList.remove('visible');
+                };
+            } else {
+                restoreBtn.classList.remove('visible');
+            }
         }));
         controls.appendChild(mkBtn('close', () => {
             win.remove();
