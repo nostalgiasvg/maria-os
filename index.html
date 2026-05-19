@@ -4,7 +4,7 @@
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <meta name="robots" content="noindex, nofollow">
-    <title>MARÍA OS</title>
+    <title>𝔪𝔞𝔯𝔦𝔞 𝔒𝔖</title>
     <link rel="icon" type="image/svg+xml" href="data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 32 32'%3E%3Crect width='32' height='32' fill='%231a1a1a'/%3E%3Cg fill='%23fff'%3E%3Crect x='2' y='4' width='2' height='2'/%3E%3Crect x='6' y='4' width='2' height='2'/%3E%3Crect x='10' y='4' width='2' height='2'/%3E%3Crect x='14' y='4' width='2' height='2'/%3E%3Crect x='18' y='4' width='2' height='2'/%3E%3Crect x='22' y='4' width='2' height='2'/%3E%3Crect x='26' y='4' width='2' height='2'/%3E%3Crect x='4' y='6' width='2' height='2'/%3E%3Crect x='8' y='6' width='2' height='2'/%3E%3Crect x='12' y='6' width='2' height='2'/%3E%3Crect x='16' y='6' width='2' height='2'/%3E%3Crect x='20' y='6' width='2' height='2'/%3E%3Crect x='24' y='6' width='2' height='2'/%3E%3Crect x='28' y='6' width='2' height='2'/%3E%3C/g%3E%3C/svg%3E">
     <!--
  _   _           _        _       _         ______     ______ 
@@ -969,12 +969,29 @@
         // Doble clic — abrir app
         icon.addEventListener('dblclick', () => openWindow(app));
 
+        // Doble tap táctil — abrir app
+        let lastTap = 0;
+        icon.addEventListener('touchend', (e) => {
+            const now = Date.now();
+            if (now - lastTap < 300) {
+                e.preventDefault();
+                openWindow(app);
+            }
+            lastTap = now;
+        });
+
         // Clic derecho — menú contextual
         icon.addEventListener('contextmenu', (e) => {
             e.preventDefault();
             e.stopPropagation();
             activeIcon = app;
             showMenu('iconContextMenu', e.clientX, e.clientY);
+        });
+
+        // Long press táctil — menú contextual
+        addLongPress(icon, (x, y) => {
+            activeIcon = app;
+            showMenu('iconContextMenu', x, y);
         });
 
         return icon;
@@ -1195,6 +1212,13 @@
         if (e.target === document.getElementById('desktop') || e.target.classList.contains('desktop')) {
             e.preventDefault();
             showMenu('desktopContextMenu', e.clientX, e.clientY);
+        }
+    });
+
+    // Long press táctil en el escritorio
+    addLongPress(document.getElementById('desktop'), (x, y, target) => {
+        if (target === document.getElementById('desktop') || target.classList.contains('desktop')) {
+            showMenu('desktopContextMenu', x, y);
         }
     });
 
@@ -1702,6 +1726,41 @@
     // =============================================
     // INIT
     // =============================================
+    // =============================================
+    // LONG PRESS — táctil equivalente a clic derecho
+    // =============================================
+    function addLongPress(el, callback, delay = 500) {
+        let timer = null;
+        let moved = false;
+        let startX = 0, startY = 0;
+
+        el.addEventListener('touchstart', (e) => {
+            if (e.touches.length !== 1) return;
+            moved = false;
+            startX = e.touches[0].clientX;
+            startY = e.touches[0].clientY;
+            timer = setTimeout(() => {
+                if (!moved) {
+                    e.preventDefault();
+                    const touch = e.touches[0] || e.changedTouches[0];
+                    callback(touch.clientX, touch.clientY, e.target);
+                }
+            }, delay);
+        }, { passive: false });
+
+        el.addEventListener('touchmove', (e) => {
+            const dx = Math.abs(e.touches[0].clientX - startX);
+            const dy = Math.abs(e.touches[0].clientY - startY);
+            if (dx > 8 || dy > 8) {
+                moved = true;
+                clearTimeout(timer);
+            }
+        }, { passive: true });
+
+        el.addEventListener('touchend', () => clearTimeout(timer));
+        el.addEventListener('touchcancel', () => clearTimeout(timer));
+    }
+
     (function init() {
         // Kaomoji guardado
         const savedK = localStorage.getItem(LS_KAOMOJI);
